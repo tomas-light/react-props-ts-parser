@@ -13,7 +13,7 @@ type Props = {
   className?: string;
   open: boolean;
   onClick: () => void;
-  size?: '16' | '24';
+  size?: '16' | '24' | 36;
   count: number;
   options: Option<string, number>[];
   classes: Record<string, string>;
@@ -35,10 +35,20 @@ to JSON:
   },
   "size": {
     "optional": true,
-    "type": "unionType",
+    "type": "union-type",
     "values": [
-      "16",
-      "24"
+      {
+        "type": "string-literal",
+        "value": "16"
+      },
+      {
+        "type": "string-literal",
+        "value": "24"
+      },
+      {
+        "type": "number-literal",
+        "value": 36
+      }
     ]
   },
   "count": {
@@ -46,20 +56,21 @@ to JSON:
   },
   "options": {
     "type": "array",
-    "descriptor": {
-      "type": "typeReference",
-      "descriptor": {
-        "label": {
-          "type": "string"
-        },
+    "values": [
+      {
+        "type": "object",
         "value": {
           "type": "number"
+        },
+        "label": {
+          "type": "string"
         }
       }
-    }
+    ]
   },
   "classes": {
-    "string": {} // <--- TBD
+    "type": "not-parsed",
+    "value": "Record<string, string>"
   }
 }
 ```

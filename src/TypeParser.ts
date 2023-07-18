@@ -6,19 +6,30 @@ export interface ParsedPropertyDescriptor<
   Values = never,
 > {
   type: Type;
+  jsDoc?: {
+    comment: string;
+    fullText: string;
+  };
   optional?: boolean;
   value?: Value;
   values?: Values extends never ? never : Values[];
 }
 
 export interface ParsedString extends ParsedPropertyDescriptor<'string'> {}
+
 export interface ParsedNumber extends ParsedPropertyDescriptor<'number'> {}
+
 export interface ParsedBoolean extends ParsedPropertyDescriptor<'boolean'> {}
+
 export interface ParsedUndefined
   extends ParsedPropertyDescriptor<'undefined'> {}
+
 export interface ParsedSymbol extends ParsedPropertyDescriptor<'symbol'> {}
+
 export interface ParsedBigint extends ParsedPropertyDescriptor<'bigint'> {}
+
 export interface ParsedNull extends ParsedPropertyDescriptor<'null'> {}
+
 export interface ParsedFunction extends ParsedPropertyDescriptor<'function'> {}
 
 export interface ParsedStringLiteral
@@ -72,17 +83,25 @@ export class TypeParser {
     typeArguments?: ts.NodeArray<ts.TypeNode>,
   ) {
     tsNode.forEachChild((childNode) => {
-      if (!ts.isPropertySignature(childNode)) {
-        // what is it?
-        debugger;
-        return;
-      }
+      let propertyName: string | undefined;
+      let parsedProperty: ParsedProperty | undefined;
 
-      const { propertyName, parsedProperty } = this.parsePropertySignatureNode(
-        name,
-        childNode,
-        typeArguments,
-      );
+      if (ts.isPropertySignature(childNode)) {
+        ({ propertyName, parsedProperty } = this.parsePropertySignatureNode(
+          name,
+          childNode,
+          typeArguments,
+        ));
+      } else if (ts.isTypeLiteralNode(childNode)) {
+        this.parse(childNode.getFullText(), childNode);
+      } else {
+        parsedProperty = this.createDescriptorForNode(
+          undefined,
+          childNode.getFullText(),
+          childNode,
+          typeArguments,
+        );
+      }
 
       if (propertyName && parsedProperty) {
         this.properties[propertyName] = parsedProperty;
@@ -109,11 +128,28 @@ export class TypeParser {
 
       parsedProperty = this.createDescriptorForNode(
         parsedProperty,
-        propertyName ?? '<3>',
+        tsNode.getFullText(),
         grandChildNode,
         typeArguments,
       );
     });
+
+    const nodeWithJsDoc = tsNode as unknown as { jsDoc: ts.NodeArray<ts.Node> };
+
+    if (
+      parsedProperty &&
+      Array.isArray(nodeWithJsDoc.jsDoc) &&
+      nodeWithJsDoc.jsDoc.length > 0
+    ) {
+      const [firstJsDocNode] = nodeWithJsDoc.jsDoc;
+      parsedProperty.jsDoc = {
+        comment: firstJsDocNode.comment,
+        fullText: firstJsDocNode.getFullText(),
+      };
+      // parsedProperty.jsDoc = nodeWithJsDoc.jsDoc
+      //   .map((node) => node.getFullText())
+      //   .join('\n');
+    }
 
     return {
       propertyName,
@@ -150,6 +186,7 @@ export class TypeParser {
       parsedProperty.type = 'not-parsed';
       parsedProperty.value = tsNode.getFullText().trim();
     }
+
     return parsedProperty;
   }
 
@@ -259,7 +296,7 @@ export class TypeParser {
       tsNode.forEachChild((itemNode) => {
         const itemProperty = this.createDescriptorForNode(
           undefined,
-          name,
+          itemNode.getFullText(),
           itemNode,
         );
         (parsedProperty as ParsedUnionType).values!.push(itemProperty as any);
@@ -295,19 +332,22 @@ export class TypeParser {
 
     const type = this.typeChecker.getTypeAtLocation(tsNode);
 
-    if (this.handleMappedType(parsedProperty, type, tsNode, typeArguments)) {
+    if (
+      this.handleMappedType(name, parsedProperty, type, tsNode, typeArguments)
+    ) {
       return true;
     } else if (
       this.handleGenericPropertyWithArgumentInReferencedType(
+        name,
         parsedProperty,
         type,
-        typeArguments,
+        typeArguments ?? tsNode.typeArguments,
       )
     ) {
       return true;
     }
 
-    return this.handleGenericProperty(parsedProperty, type, tsNode);
+    return this.handleGenericProperty(name, parsedProperty, type, tsNode);
   }
 
   private getTypeProperties(type: ts.Type) {
@@ -330,6 +370,7 @@ export class TypeParser {
    * };
    * */
   private handleGenericPropertyWithArgumentInReferencedType(
+    name: string,
     parsedProperty: ParsedProperty,
     type: ts.Type,
     typeArguments?: ts.NodeArray<ts.TypeNode>,
@@ -379,7 +420,7 @@ export class TypeParser {
     if (argument) {
       this.createDescriptorForNode(
         parsedProperty,
-        declaration.name.escapedText ?? '<1>',
+        declaration.getFullText(),
         argument,
         typeArguments,
       );
@@ -401,6 +442,7 @@ export class TypeParser {
    * };
    * */
   private handleGenericProperty(
+    name: string,
     parsedProperty: ParsedProperty,
     type: ts.Type,
     tsReferenceNode: ts.TypeReferenceNode,
@@ -413,14 +455,39 @@ export class TypeParser {
     parsedProperty.type = 'object';
     parsedProperty.value = {};
 
-    for (const propertySymbol of properties) {
+    for (
+      let propertyIndex = 0;
+      propertyIndex < properties.length;
+      propertyIndex++
+    ) {
+      const propertySymbol = properties[propertyIndex];
+      const passedGenericType = tsReferenceNode.typeArguments?.[propertyIndex];
+
       if (propertySymbol.valueDeclaration) {
-        const { propertyName, parsedProperty: nestedProperty } =
-          this.parsePropertySignatureNode(
-            propertySymbol.name ?? '<2>',
-            propertySymbol.valueDeclaration,
-            tsReferenceNode.typeArguments,
-          );
+        let propertyName: string | undefined;
+        let nestedProperty: ParsedProperty | undefined;
+
+        if (passedGenericType) {
+          propertySymbol.valueDeclaration.forEachChild((grandChildNode) => {
+            if (ts.isIdentifier(grandChildNode)) {
+              propertyName = grandChildNode.text;
+              return;
+            }
+
+            nestedProperty = this.createDescriptorForNode(
+              undefined,
+              passedGenericType.getFullText(),
+              passedGenericType,
+            );
+          });
+        } else {
+          ({ propertyName, parsedProperty: nestedProperty } =
+            this.parsePropertySignatureNode(
+              propertySymbol.valueDeclaration.getFullText(),
+              propertySymbol.valueDeclaration,
+              tsReferenceNode.typeArguments,
+            ));
+        }
 
         if (propertyName && nestedProperty) {
           parsedProperty[propertyName as keyof ParsedProperty] =
@@ -442,6 +509,7 @@ export class TypeParser {
    * };
    * */
   private handleMappedType(
+    name: string,
     parsedProperty: ParsedProperty,
     type: ts.Type,
     tsReferenceNode: ts.TypeReferenceNode,

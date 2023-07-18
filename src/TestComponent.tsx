@@ -1,12 +1,22 @@
 import { FC, ReactNode } from 'react';
 
-type Option<Label, Value> = {
+type Option<Label extends string, Value> = {
   label: Label;
   value: Value;
 };
 
-type Props = {
+type SomeProps = {
+  backgroundColor?: string;
+  variant: 'a' | 'b';
+};
+
+type Props = Pick<SomeProps, 'backgroundColor'> & {
   className?: string;
+  /**
+   * my property description
+   * @example
+   * <TestComponent open={true} />
+   */
   open: boolean;
   onClick: () => void;
   size?: '16' | '24' | 36;
@@ -21,3 +31,5 @@ export const TestComponent: FC<Props> = (props) => {
 
   return null as any;
 };
+
+export type { Props as TestComponentProps };

@@ -32,7 +32,7 @@ export function parsePropsInFile(
       if (name === 'Props') {
         let propsNodeDefinition: ts.Node | undefined;
         node.forEachChild((propsNode) => {
-          if (ts.isTypeLiteralNode(propsNode)) {
+          if (!ts.isIdentifier(propsNode)) {
             propsNodeDefinition = propsNode;
           }
         });

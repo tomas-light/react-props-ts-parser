@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { FC, ReactNode } from 'react';
 
 type Option<Label, Value> = {
   label: Label;
@@ -13,6 +13,7 @@ type Props = {
   count: number;
   options: Option<string, number>[];
   classes: Record<string, string>;
+  children?: ReactNode;
 };
 
 export const TestComponent: FC<Props> = (props) => {

@@ -307,8 +307,7 @@ export class TypeParser {
       return true;
     }
 
-    this.handleGenericProperty(parsedProperty, type, tsNode);
-    return true;
+    return this.handleGenericProperty(parsedProperty, type, tsNode);
   }
 
   private getTypeProperties(type: ts.Type) {
@@ -406,10 +405,14 @@ export class TypeParser {
     type: ts.Type,
     tsReferenceNode: ts.TypeReferenceNode,
   ) {
+    const properties = this.getTypeProperties(type);
+    if (!properties.length) {
+      return false;
+    }
+
     parsedProperty.type = 'object';
     parsedProperty.value = {};
 
-    const properties = this.getTypeProperties(type);
     for (const propertySymbol of properties) {
       if (propertySymbol.valueDeclaration) {
         const { propertyName, parsedProperty: nestedProperty } =
@@ -425,6 +428,8 @@ export class TypeParser {
         }
       }
     }
+
+    return true;
   }
 
   /**

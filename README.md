@@ -4,6 +4,8 @@ Work In Progress
 
 Transform typescript Props definition:
 ```tsx
+import { ReactNode } from 'react';
+
 type Option<Label, Value> = {
   label: Label;
   value: Value;
@@ -17,6 +19,7 @@ type Props = {
   count: number;
   options: Option<string, number>[];
   classes: Record<string, string>;
+  children?: ReactNode;
 };
 ```
 
@@ -71,6 +74,11 @@ to JSON:
   "classes": {
     "type": "not-parsed",
     "value": "Record<string, string>"
+  },
+  "children": {
+    "optional": true,
+    "type": "not-parsed",
+    "value": "ReactNode"
   }
 }
 ```

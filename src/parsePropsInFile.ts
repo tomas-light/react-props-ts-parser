@@ -1,31 +1,10 @@
-import * as path from 'path';
 import ts from 'typescript';
 import { TypeParser } from './TypeParser';
 
-const compilerOptions: ts.CompilerOptions = {
-  allowSyntheticDefaultImports: true,
-  composite: true,
-  declaration: true,
-  declarationMap: true,
-  esModuleInterop: true,
-  emitDecoratorMetadata: true,
-  experimentalDecorators: true,
-  forceConsistentCasingInFileNames: true,
-  isolatedModules: true,
-  jsx: ts.JsxEmit.ReactJSX,
-  lib: ['dom', 'dom.iterable', 'esnext'],
-  module: ts.ModuleKind.ESNext,
-  moduleResolution: ts.ModuleResolutionKind.NodeNext,
-  noImplicitAny: true,
-  resolveJsonModule: true,
-  skipLibCheck: true,
-  strictNullChecks: true,
-  sourceMap: true,
-  strict: true,
-  target: ts.ScriptTarget.ESNext,
-};
-
-async function printComponentProps(componentFilePath: string) {
+export function parsePropsInFile(
+  componentFilePath: string,
+  compilerOptions: ts.CompilerOptions,
+) {
   const host = ts.createCompilerHost(compilerOptions);
   const program = ts.createProgram({
     host,
@@ -36,10 +15,9 @@ async function printComponentProps(componentFilePath: string) {
   const sourceFile = program.getSourceFile(componentFilePath);
 
   if (!sourceFile) {
-    return;
+    console.error(`source file is not found on ${componentFilePath}`);
+    return { source: null, parsed: null };
   }
-
-  const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
 
   const propsNodes: ts.Node[] = [];
 
@@ -73,24 +51,23 @@ async function printComponentProps(componentFilePath: string) {
   });
 
   if (propsNodes.length === 0) {
-    console.log('props are not found');
-    return;
+    console.error('props are not found');
+    return { source: null, parsed: null };
   }
 
   if (propsNodes.length > 1) {
-    console.log('too many props declarations');
-    return;
+    console.error('too many props declarations');
+    return { source: null, parsed: null };
   }
 
   const [propsNode] = propsNodes;
-  console.log(
-    printer.printNode(ts.EmitHint.Unspecified, propsNode, sourceFile),
-  ) + '\n';
 
   const typeParser = new TypeParser(typeChecker);
   const parsedProperties = typeParser.parse('Props', propsNode);
 
-  console.log(JSON.stringify(parsedProperties, null, 2));
+  const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+  return {
+    source: printer.printNode(ts.EmitHint.Unspecified, propsNode, sourceFile),
+    parsed: parsedProperties,
+  };
 }
-
-printComponentProps(path.join('src', 'TestComponent.tsx'));

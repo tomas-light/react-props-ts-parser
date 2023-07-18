@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-interface ParsedPropertyDescriptor<
+export interface ParsedPropertyDescriptor<
   Type extends string,
   Value = never,
   Values = never,
@@ -11,37 +11,38 @@ interface ParsedPropertyDescriptor<
   values?: Values extends never ? never : Values[];
 }
 
-interface ParsedString extends ParsedPropertyDescriptor<'string'> {}
-interface ParsedNumber extends ParsedPropertyDescriptor<'number'> {}
-interface ParsedBoolean extends ParsedPropertyDescriptor<'boolean'> {}
-interface ParsedUndefined extends ParsedPropertyDescriptor<'undefined'> {}
-interface ParsedSymbol extends ParsedPropertyDescriptor<'symbol'> {}
-interface ParsedBigint extends ParsedPropertyDescriptor<'bigint'> {}
-interface ParsedNull extends ParsedPropertyDescriptor<'null'> {}
-interface ParsedFunction extends ParsedPropertyDescriptor<'function'> {}
+export interface ParsedString extends ParsedPropertyDescriptor<'string'> {}
+export interface ParsedNumber extends ParsedPropertyDescriptor<'number'> {}
+export interface ParsedBoolean extends ParsedPropertyDescriptor<'boolean'> {}
+export interface ParsedUndefined
+  extends ParsedPropertyDescriptor<'undefined'> {}
+export interface ParsedSymbol extends ParsedPropertyDescriptor<'symbol'> {}
+export interface ParsedBigint extends ParsedPropertyDescriptor<'bigint'> {}
+export interface ParsedNull extends ParsedPropertyDescriptor<'null'> {}
+export interface ParsedFunction extends ParsedPropertyDescriptor<'function'> {}
 
-interface ParsedStringLiteral
+export interface ParsedStringLiteral
   extends ParsedPropertyDescriptor<'string-literal', string> {}
 
-interface ParsedNumberLiteral
+export interface ParsedNumberLiteral
   extends ParsedPropertyDescriptor<'number-literal', number> {}
 
-interface ParsedUnionType
+export interface ParsedUnionType
   extends ParsedPropertyDescriptor<'union-type', never, ParsedProperty> {}
 
-interface ParsedArray
+export interface ParsedArray
   extends ParsedPropertyDescriptor<'array', never, ParsedProperty> {}
 
-interface ParsedObject
+export interface ParsedObject
   extends ParsedPropertyDescriptor<
     'object',
     { [propertyName: string]: ParsedProperty }
   > {}
 
-interface NotParsedType
+export interface NotParsedType
   extends ParsedPropertyDescriptor<'not-parsed', string> {}
 
-type ParsedProperty =
+export type ParsedProperty =
   | ParsedString
   | ParsedNumber
   | ParsedBoolean
@@ -146,7 +147,8 @@ export class TypeParser {
     } else if (this.handleOptionalProperty(name, tsNode, parsedProperty)) {
       //
     } else {
-      console.warn('Node is not handled', tsNode);
+      parsedProperty.type = 'not-parsed';
+      parsedProperty.value = tsNode.getFullText().trim();
     }
     return parsedProperty;
   }
@@ -339,7 +341,12 @@ export class TypeParser {
       return false;
     }
 
-    const declarations = type.symbol.getDeclarations();
+    const symbol = type.symbol ?? type.aliasSymbol;
+    if (!symbol) {
+      return false;
+    }
+
+    const declarations = symbol.getDeclarations();
     if (!declarations?.length || declarations.length > 1) {
       // can be more than one? what should we do?
       return false;

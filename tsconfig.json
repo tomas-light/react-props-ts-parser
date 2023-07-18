@@ -1,14 +1,18 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "declaration": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
     "module": "CommonJS",
     "moduleResolution": "node",
+    "noErrorTruncation": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "sourceMap": true,
     "strict": true,
     "strictNullChecks": true,
-    "target": "ES2022"
+    "target": "ESNext"
   }
 }

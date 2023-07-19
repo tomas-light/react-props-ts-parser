@@ -50,6 +50,15 @@ export interface ParsedObject
     { [propertyName: string]: ParsedProperty }
   > {}
 
+export interface ParsedImportedReactType
+  extends ParsedPropertyDescriptor<'imported-from-react', string> {}
+
+export interface ParsedImportedType
+  extends ParsedPropertyDescriptor<'imported-type', string> {}
+
+export interface ParsedGenericConstraint
+  extends ParsedPropertyDescriptor<'generic-constraint', string> {}
+
 export interface NotParsedType
   extends ParsedPropertyDescriptor<'not-parsed', string> {}
 
@@ -67,6 +76,9 @@ export type ParsedProperty =
   | ParsedUnionType
   | ParsedArray
   | ParsedObject
+  | ParsedImportedReactType
+  | ParsedImportedType
+  | ParsedGenericConstraint
   | NotParsedType;
 
 export class TypeParser {
@@ -330,24 +342,108 @@ export class TypeParser {
       return false;
     }
 
-    const type = this.typeChecker.getTypeAtLocation(tsNode);
+    const tsType = this.typeChecker.getTypeAtLocation(tsNode);
+
+    const parent = this.getTypeExportedModule(tsType, tsNode);
+    if (parent) {
+      parsedProperty.value = tsNode.getFullText().trim();
+
+      if (parent?.name?.toLowerCase() === 'react') {
+        parsedProperty.type = 'imported-from-react';
+      } else {
+        parsedProperty.type = 'imported-type';
+      }
+
+      return true;
+    }
 
     if (
-      this.handleMappedType(name, parsedProperty, type, tsNode, typeArguments)
+      this.handleMappedType(name, parsedProperty, tsType, tsNode, typeArguments)
     ) {
       return true;
     } else if (
       this.handleGenericPropertyWithArgumentInReferencedType(
         name,
         parsedProperty,
-        type,
+        tsType,
         typeArguments ?? tsNode.typeArguments,
       )
     ) {
       return true;
     }
 
-    return this.handleGenericProperty(name, parsedProperty, type, tsNode);
+    return this.handleGenericProperty(name, parsedProperty, tsType, tsNode);
+  }
+
+  private getTypeExportedModule(tsType: ts.Type, tsNode: ts.Node) {
+    if (ts.isExternalModuleReference(tsNode)) {
+      // todo: doesn't work. Can it help with React imports detection?
+      debugger;
+      console.log('debugger');
+      return tsType.aliasSymbol;
+    }
+    if (ts.isExternalModuleNameRelative(tsNode.getFullText())) {
+      // todo: doesn't work. Can it help with React imports detection?
+      debugger;
+      console.log('debugger');
+      return tsType.aliasSymbol;
+    }
+    if (ts.isExternalModuleReference(tsNode)) {
+      // todo: doesn't work. Can it help with React imports detection?
+      debugger;
+      console.log('debugger');
+      return tsType.aliasSymbol;
+    }
+    if (ts.isModuleBlock(tsNode)) {
+      // todo: doesn't work. Can it help with React imports detection?
+      debugger;
+      console.log('debugger');
+      return tsType.aliasSymbol;
+    }
+    if (ts.isModuleDeclaration(tsNode)) {
+      // todo: doesn't work. Can it help with React imports detection?
+      debugger;
+      console.log('debugger');
+      return tsType.aliasSymbol;
+    }
+    if (ts.isModuleReference(tsNode)) {
+      // todo: doesn't work. Can it help with React imports detection?
+      debugger;
+      console.log('debugger');
+      return tsType.aliasSymbol;
+    }
+
+    let module = (tsType.symbol ?? tsType.aliasSymbol) as ts.Symbol & {
+      parent?: ts.Symbol;
+    };
+
+    while (module?.parent) {
+      module = module.parent;
+      if (ts.isExternalModuleReference(module as any)) {
+        // todo: doesn't work. Can it help with React imports detection?
+        debugger;
+        console.log('debugger');
+        break;
+      }
+      if (ts.isExternalModuleNameRelative(module.name)) {
+        // todo: doesn't work. Can it help with React imports detection?
+        debugger;
+        console.log('debugger');
+        break;
+      }
+      if (ts.isExternalModuleReference(module as any)) {
+        // todo: doesn't work. Can it help with React imports detection?
+        debugger;
+        console.log('debugger');
+        break;
+      }
+      if (module.exports) {
+        // we assume that it is React root type
+        break;
+      }
+    }
+
+    return module as ts.Symbol;
   }
 
   private getTypeProperties(type: ts.Type) {
@@ -375,6 +471,15 @@ export class TypeParser {
     type: ts.Type,
     typeArguments?: ts.NodeArray<ts.TypeNode>,
   ) {
+    const genericTypeConstraint = type.getConstraint() as ts.Type & {
+      intrinsicName?: string;
+    };
+    if (genericTypeConstraint?.intrinsicName) {
+      parsedProperty.type = 'generic-constraint';
+      parsedProperty.value = genericTypeConstraint.intrinsicName;
+      return true;
+    }
+
     const properties = this.getTypeProperties(type);
 
     if (properties.length !== 0) {

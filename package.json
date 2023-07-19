@@ -1,6 +1,6 @@
 {
   "name": "react-props-ts-parser",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Get React component Props as JSON to be able to render documentation for your component based on Typescript definition",
   "author": "Artem Ignatev <art.ser.ignatiev@gmail.com>",
   "repository": "git@github.com:tomas-light/react-props-ts-parser.git",
@@ -33,6 +33,7 @@
     "@types/node": "^20.4.1",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
+    "dayjs": "1.11.9",
     "eslint": "8.45.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-import-resolver-typescript": "3.5.5",

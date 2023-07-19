@@ -4,34 +4,58 @@ Work In Progress
 
 Transform typescript Props definition:
 ```tsx
-import { ReactNode } from 'react';
+import { Dayjs } from 'dayjs';
+import { CSSProperties, FC, ReactNode } from 'react';
 
-type Option<Label, Value> = {
+type Option<Label extends string, Value> = {
   label: Label;
   value: Value;
-}
+};
 
-type Props = {
+type SomeProps = {
+  backgroundColor?: string;
+  variant: 'a' | 'b';
+};
+
+type Props<Id extends string> =
+  // mapped types not supported yet
+  Pick<SomeProps, 'backgroundColor'> & {
+  id: Id;
   className?: string;
+  /**
+   * my property description
+   * @example
+   * <TestComponent open={true} />
+   */
   open: boolean;
   onClick: () => void;
   size?: '16' | '24' | 36;
   count: number;
   options: Option<string, number>[];
-  classes: Record<string, string>;
-  children?: ReactNode;
+  classes: Record<string, string>; // mapped types not supported yet
+  children: ReactNode;
+  style?: CSSProperties;
+  date: Dayjs;
 };
 ```
 
 to JSON:
 ```json
 {
+  "id": {
+    "value": "Id",
+    "type": "imported-type"
+  },
   "className": {
     "optional": true,
     "type": "string"
   },
   "open": {
-    "type": "boolean"
+    "type": "boolean",
+    "jsDoc": {
+      "comment": "my property description",
+      "fullText": "/**\n   * my property description\n   * @example\n   * <TestComponent open={true} />\n   */"
+    }
   },
   "onClick": {
     "type": "function"
@@ -61,24 +85,27 @@ to JSON:
     "type": "array",
     "values": [
       {
-        "type": "object",
-        "value": {
-          "type": "number"
-        },
-        "label": {
-          "type": "string"
-        }
+        "value": "Option<string, number>",
+        "type": "imported-type"
       }
     ]
   },
   "classes": {
-    "type": "not-parsed",
-    "value": "Record<string, string>"
+    "value": "Record<string, string>",
+    "type": "imported-type"
   },
   "children": {
+    "value": "ReactNode",
+    "type": "imported-from-react"
+  },
+  "style": {
     "optional": true,
-    "type": "not-parsed",
-    "value": "ReactNode"
+    "value": "CSSProperties",
+    "type": "imported-from-react"
+  },
+  "date": {
+    "value": "Dayjs",
+    "type": "imported-type"
   }
 }
 ```

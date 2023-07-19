@@ -1,4 +1,5 @@
-import { FC, ReactNode } from 'react';
+import { Dayjs } from 'dayjs';
+import { CSSProperties, FC, ReactNode } from 'react';
 
 type Option<Label extends string, Value> = {
   label: Label;
@@ -10,7 +11,8 @@ type SomeProps = {
   variant: 'a' | 'b';
 };
 
-type Props = Pick<SomeProps, 'backgroundColor'> & {
+type Props<Id extends string> = Pick<SomeProps, 'backgroundColor'> & {
+  id: Id;
   className?: string;
   /**
    * my property description
@@ -23,10 +25,13 @@ type Props = Pick<SomeProps, 'backgroundColor'> & {
   count: number;
   options: Option<string, number>[];
   classes: Record<string, string>;
-  children?: ReactNode;
+  children: ReactNode;
+  style?: CSSProperties;
+
+  date: Dayjs;
 };
 
-export const TestComponent: FC<Props> = (props) => {
+export const TestComponent: FC<Props<string>> = (props) => {
   const {} = props;
 
   return null as any;

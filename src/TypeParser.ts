@@ -346,15 +346,21 @@ export class TypeParser {
 
     const parent = this.getTypeExportedModule(tsType, tsNode);
     if (parent) {
-      parsedProperty.value = tsNode.getFullText().trim();
+      const name = parent?.name?.toLowerCase();
+      const value = tsNode.getFullText().trim();
 
-      if (parent?.name?.toLowerCase() === 'react') {
-        parsedProperty.type = 'imported-from-react';
+      if (name === '__type') {
+        // todo: ts in-build type, or local defined type
       } else {
-        parsedProperty.type = 'imported-type';
-      }
+        if (name === 'react') {
+          parsedProperty.type = 'imported-from-react';
+        } else {
+          parsedProperty.type = 'imported-type';
+        }
 
-      return true;
+        parsedProperty.value = value;
+        return true;
+      }
     }
 
     if (

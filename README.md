@@ -43,8 +43,8 @@ to JSON:
 ```json
 {
   "id": {
-    "value": "Id",
-    "type": "imported-type"
+    "type": "imported-type",
+    "value": "Id"
   },
   "className": {
     "optional": true,
@@ -85,27 +85,32 @@ to JSON:
     "type": "array",
     "values": [
       {
-        "value": "Option<string, number>",
-        "type": "imported-type"
+        "type": "object",
+        "value": {
+          "type": "number"
+        },
+        "label": {
+          "type": "string"
+        }
       }
     ]
   },
   "classes": {
-    "value": "Record<string, string>",
-    "type": "imported-type"
+    "type": "not-parsed",
+    "value": "Record<string, string>"
   },
   "children": {
-    "value": "ReactNode",
-    "type": "imported-from-react"
+    "type": "imported-from-react",
+    "value": "ReactNode"
   },
   "style": {
     "optional": true,
-    "value": "CSSProperties",
-    "type": "imported-from-react"
+    "type": "imported-from-react",
+    "value": "CSSProperties"
   },
   "date": {
-    "value": "Dayjs",
-    "type": "imported-type"
+    "type": "imported-type",
+    "value": "Dayjs"
   }
 }
 ```

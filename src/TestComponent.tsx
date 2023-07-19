@@ -31,6 +31,11 @@ type Props<Id extends string> = Pick<SomeProps, 'backgroundColor'> & {
   date: Dayjs;
 };
 
+// type Props = {
+//   // classes: Record<'root' | 'container', string>;
+//   options: Option<string, number>[];
+// };
+
 export const TestComponent: FC<Props<string>> = (props) => {
   const {} = props;
 

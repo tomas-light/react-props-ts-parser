@@ -5,7 +5,7 @@ Work In Progress
 Transform typescript Props definition:
 ```tsx
 import { Dayjs } from 'dayjs';
-import { CSSProperties, FC, ReactNode } from 'react';
+import { CSSProperties, FC, ReactElement, ReactNode } from 'react';
 
 type Option<Label extends string, Value> = {
   label: Label;
@@ -17,8 +17,15 @@ type SomeProps = {
   variant: 'a' | 'b';
 };
 
+type SomeOtherProps<Id> = {
+  id: Id;
+  variant: 'a' | 'b';
+};
+
+type Variant = 'success' | 'info' | 'warning' | 'error';
+
 type Props<Id extends string> =
-  // mapped types not supported yet
+// mapped types not supported yet
   Pick<SomeProps, 'backgroundColor'> & {
   id: Id;
   className?: string;
@@ -31,10 +38,14 @@ type Props<Id extends string> =
   onClick: () => void;
   size?: '16' | '24' | 36;
   count: number;
-  options: Option<string, number>[];
-  classes: Record<string, string>; // mapped types not supported yet
+  options: Option<'name' | 'title', number>[];
+  // mapped types not supported yet
+  classes: Record<string, string>;
   children: ReactNode;
+  someChildren: ReactElement<SomeOtherProps<Id>>[];
   style?: CSSProperties;
+
+  variant: Variant;
   date: Dayjs;
 };
 ```
@@ -43,8 +54,8 @@ to JSON:
 ```json
 {
   "id": {
-    "type": "imported-type",
-    "value": "Id"
+    "type": "generic-constraint",
+    "value": "string"
   },
   "className": {
     "optional": true,
@@ -90,7 +101,17 @@ to JSON:
           "type": "number"
         },
         "label": {
-          "type": "string"
+          "type": "union-type",
+          "values": [
+            {
+              "type": "string-literal",
+              "value": "name"
+            },
+            {
+              "type": "string-literal",
+              "value": "title"
+            }
+          ]
         }
       }
     ]
@@ -100,13 +121,43 @@ to JSON:
     "value": "Record<string, string>"
   },
   "children": {
-    "type": "imported-from-react",
+    "type": "imported-type",
     "value": "ReactNode"
+  },
+  "someChildren": {
+    "type": "array",
+    "values": [
+      {
+        "type": "imported-type",
+        "value": "ReactElement<SomeOtherProps<Id>>"
+      }
+    ]
   },
   "style": {
     "optional": true,
-    "type": "imported-from-react",
+    "type": "imported-type",
     "value": "CSSProperties"
+  },
+  "variant": {
+    "type": "union-type",
+    "values": [
+      {
+        "type": "string-literal",
+        "value": "success"
+      },
+      {
+        "type": "string-literal",
+        "value": "info"
+      },
+      {
+        "type": "string-literal",
+        "value": "warning"
+      },
+      {
+        "type": "string-literal",
+        "value": "error"
+      }
+    ]
   },
   "date": {
     "type": "imported-type",

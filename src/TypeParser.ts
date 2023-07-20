@@ -194,6 +194,8 @@ export class TypeParser {
       //
     } else if (this.handleOptionalProperty(name, tsNode, parsedProperty)) {
       //
+    } else if (this.handleTypeAlias(name, tsNode, parsedProperty)) {
+      //
     } else {
       parsedProperty.type = 'not-parsed';
       parsedProperty.value = tsNode.getFullText().trim();
@@ -296,6 +298,24 @@ export class TypeParser {
     return false;
   }
 
+  private handleTypeAlias(
+    name: string,
+    tsNode: ts.Node,
+    parsedProperty: ParsedProperty,
+  ) {
+    if (!ts.isTypeAliasDeclaration(tsNode)) {
+      return false;
+    }
+
+    tsNode.forEachChild((typeAliasNode) => {
+      if (!ts.isIdentifier(typeAliasNode)) {
+        this.createDescriptorForNode(parsedProperty, name, typeAliasNode);
+      }
+    });
+
+    return true;
+  }
+
   private handleArrayType(
     name: string,
     tsNode: ts.Node,
@@ -342,114 +362,211 @@ export class TypeParser {
       return false;
     }
 
-    const tsType = this.typeChecker.getTypeAtLocation(tsNode);
-
-    const parent = this.getTypeExportedModule(tsType, tsNode);
-    if (parent) {
-      const name = parent?.name?.toLowerCase();
-      const value = tsNode.getFullText().trim();
-
-      if (name === '__type') {
-        // todo: ts in-build type, or local defined type
-      } else {
-        if (name === 'react') {
-          parsedProperty.type = 'imported-from-react';
-        } else {
-          parsedProperty.type = 'imported-type';
-        }
-
-        parsedProperty.value = value;
-        return true;
-      }
-    }
-
-    if (
-      this.handleMappedType(name, parsedProperty, tsType, tsNode, typeArguments)
+    if (this.handleImportedTypes(name, parsedProperty, tsNode, typeArguments)) {
+      return true;
+    } else if (
+      this.handleMappedType(name, parsedProperty, tsNode, typeArguments)
     ) {
       return true;
     } else if (
       this.handleGenericPropertyWithArgumentInReferencedType(
         name,
         parsedProperty,
-        tsType,
+        tsNode,
         typeArguments ?? tsNode.typeArguments,
       )
     ) {
       return true;
+    } else if (this.handleGenericProperty(name, parsedProperty, tsNode)) {
+      return true;
     }
 
-    return this.handleGenericProperty(name, parsedProperty, tsType, tsNode);
+    return false;
   }
 
-  private getTypeExportedModule(tsType: ts.Type, tsNode: ts.Node) {
-    if (ts.isExternalModuleReference(tsNode)) {
-      // todo: doesn't work. Can it help with React imports detection?
-      debugger;
-      console.log('debugger');
-      return tsType.aliasSymbol;
-    }
-    if (ts.isExternalModuleNameRelative(tsNode.getFullText())) {
-      // todo: doesn't work. Can it help with React imports detection?
-      debugger;
-      console.log('debugger');
-      return tsType.aliasSymbol;
-    }
-    if (ts.isExternalModuleReference(tsNode)) {
-      // todo: doesn't work. Can it help with React imports detection?
-      debugger;
-      console.log('debugger');
-      return tsType.aliasSymbol;
-    }
-    if (ts.isModuleBlock(tsNode)) {
-      // todo: doesn't work. Can it help with React imports detection?
-      debugger;
-      console.log('debugger');
-      return tsType.aliasSymbol;
-    }
-    if (ts.isModuleDeclaration(tsNode)) {
-      // todo: doesn't work. Can it help with React imports detection?
-      debugger;
-      console.log('debugger');
-      return tsType.aliasSymbol;
-    }
-    if (ts.isModuleReference(tsNode)) {
-      // todo: doesn't work. Can it help with React imports detection?
-      debugger;
-      console.log('debugger');
-      return tsType.aliasSymbol;
+  // private findImports() {
+  //   const imports: {
+  //     identifier: ts.Identifier;
+  //     nameFromWhereImportIs: string;
+  //   }[] = [];
+  //
+  //   ts.forEachChild(this.sourceFile, (node) => {
+  //     if (ts.isImportDeclaration(node)) {
+  //       let nameFromWhereImportIs: string | undefined;
+  //       const identifiers: ts.Identifier[] = [];
+  //
+  //       node.forEachChild((importNode) => {
+  //         if (ts.isStringLiteral(importNode)) {
+  //           nameFromWhereImportIs = importNode.getFullText();
+  //         } else if (ts.isImportClause(importNode)) {
+  //           importNode.forEachChild((importClauseNode) => {
+  //             if (ts.isIdentifier(importClauseNode)) {
+  //               identifiers.push(importClauseNode);
+  //             } else if (ts.isNamedImports(importClauseNode)) {
+  //               importClauseNode.forEachChild((namedImportNode) => {
+  //                 if (ts.isImportSpecifier(namedImportNode)) {
+  //                   namedImportNode.forEachChild((importSpecifier) => {
+  //                     if (ts.isIdentifier(importSpecifier)) {
+  //                       identifiers.push(importSpecifier);
+  //                     }
+  //                   });
+  //                 }
+  //               });
+  //             }
+  //           });
+  //         }
+  //       });
+  //
+  //       if (nameFromWhereImportIs) {
+  //         identifiers.forEach((identifier) => {
+  //           imports.push({
+  //             identifier,
+  //             nameFromWhereImportIs: nameFromWhereImportIs!,
+  //           });
+  //         });
+  //       }
+  //     }
+  //   });
+  //
+  //   return imports;
+  // }
+  //
+  // private getTypeExportedModule(tsType: ts.Type, tsNode: ts.Node) {
+  //   if (ts.isExternalModuleReference(tsNode)) {
+  //     // todo: doesn't work. Can it help with React imports detection?
+  //     debugger;
+  //     console.log('debugger');
+  //     return tsType.aliasSymbol;
+  //   }
+  //   if (ts.isExternalModuleNameRelative(tsNode.getFullText())) {
+  //     // todo: doesn't work. Can it help with React imports detection?
+  //     debugger;
+  //     console.log('debugger');
+  //     return tsType.aliasSymbol;
+  //   }
+  //   if (ts.isExternalModuleReference(tsNode)) {
+  //     // todo: doesn't work. Can it help with React imports detection?
+  //     debugger;
+  //     console.log('debugger');
+  //     return tsType.aliasSymbol;
+  //   }
+  //   if (ts.isModuleBlock(tsNode)) {
+  //     // todo: doesn't work. Can it help with React imports detection?
+  //     debugger;
+  //     console.log('debugger');
+  //     return tsType.aliasSymbol;
+  //   }
+  //   if (ts.isModuleDeclaration(tsNode)) {
+  //     // todo: doesn't work. Can it help with React imports detection?
+  //     debugger;
+  //     console.log('debugger');
+  //     return tsType.aliasSymbol;
+  //   }
+  //   if (ts.isModuleReference(tsNode)) {
+  //     // todo: doesn't work. Can it help with React imports detection?
+  //     debugger;
+  //     console.log('debugger');
+  //     return tsType.aliasSymbol;
+  //   }
+  //
+  //   let module = (tsType.symbol ?? tsType.aliasSymbol) as ts.Symbol & {
+  //     parent?: ts.Symbol;
+  //   };
+  //
+  //   while (module?.parent) {
+  //     module = module.parent;
+  //     if (ts.isExternalModuleReference(module as any)) {
+  //       // todo: doesn't work. Can it help with React imports detection?
+  //       debugger;
+  //       console.log('debugger');
+  //       break;
+  //     }
+  //     if (ts.isExternalModuleNameRelative(module.name)) {
+  //       // todo: doesn't work. Can it help with React imports detection?
+  //       debugger;
+  //       console.log('debugger');
+  //       break;
+  //     }
+  //     if (ts.isExternalModuleReference(module as any)) {
+  //       // todo: doesn't work. Can it help with React imports detection?
+  //       debugger;
+  //       console.log('debugger');
+  //       break;
+  //     }
+  //     if (module.exports) {
+  //       // we assume that it is React root type
+  //       break;
+  //     }
+  //   }
+  //
+  //   return module as ts.Symbol;
+  // }
+
+  private handleImportedTypes(
+    name: string,
+    parsedProperty: ParsedProperty,
+    tsNode: ts.Node,
+    typeArguments?: ts.NodeArray<ts.TypeNode>,
+  ) {
+    let identifierSymbol: ts.Symbol | undefined;
+    for (const nodeChild of tsNode.getChildren()) {
+      if (ts.isIdentifier(nodeChild)) {
+        identifierSymbol = this.typeChecker.getSymbolAtLocation(nodeChild);
+        break;
+      }
     }
 
-    let module = (tsType.symbol ?? tsType.aliasSymbol) as ts.Symbol & {
-      parent?: ts.Symbol;
-    };
-
-    while (module?.parent) {
-      module = module.parent;
-      if (ts.isExternalModuleReference(module as any)) {
-        // todo: doesn't work. Can it help with React imports detection?
-        debugger;
-        console.log('debugger');
-        break;
-      }
-      if (ts.isExternalModuleNameRelative(module.name)) {
-        // todo: doesn't work. Can it help with React imports detection?
-        debugger;
-        console.log('debugger');
-        break;
-      }
-      if (ts.isExternalModuleReference(module as any)) {
-        // todo: doesn't work. Can it help with React imports detection?
-        debugger;
-        console.log('debugger');
-        break;
-      }
-      if (module.exports) {
-        // we assume that it is React root type
-        break;
-      }
+    const symbolDeclarations = identifierSymbol?.getDeclarations();
+    if (!symbolDeclarations?.length) {
+      return false;
     }
 
-    return module as ts.Symbol;
+    const isImport = symbolDeclarations.some(
+      (declaration) =>
+        ts.isImportSpecifier(declaration) ||
+        ts.isImportClause(declaration) ||
+        ts.isExternalModuleReference(declaration),
+    );
+
+    if (isImport) {
+      parsedProperty.type = 'imported-type';
+      parsedProperty.value = tsNode.getFullText().trim();
+      return true;
+    }
+
+    if (symbolDeclarations.length === 1) {
+      const [declaration] = symbolDeclarations;
+      // if (
+      //   ts.isInterfaceDeclaration(declaration) ||
+      //   ts.isTypeAliasDeclaration(declaration)
+      // ) {
+      //   if (declaration.typeParameters?.length) {
+      //     return false;
+      //   }
+      // }
+      if (
+        typeArguments?.length ||
+        (tsNode as { typeArguments?: unknown[] }).typeArguments?.length
+      ) {
+        return false;
+      }
+
+      const tsType = this.typeChecker.getTypeAtLocation(tsNode);
+      if (
+        this.handleGenericPropertyAsConstraint(name, parsedProperty, tsType)
+      ) {
+        return true;
+      }
+
+      this.createDescriptorForNode(
+        parsedProperty,
+        declaration.getFullText(),
+        declaration,
+      );
+      return true;
+    }
+
+    return false;
   }
 
   private getTypeProperties(type: ts.Type) {
@@ -459,6 +576,23 @@ export class TypeParser {
     return joinedProperties.filter(
       (sym, index) => joinedProperties.indexOf(sym) === index,
     );
+  }
+
+  private handleGenericPropertyAsConstraint(
+    name: string,
+    parsedProperty: ParsedProperty,
+    type: ts.Type,
+  ) {
+    const genericTypeConstraint = type.getConstraint() as ts.Type & {
+      intrinsicName?: string;
+    };
+    if (genericTypeConstraint?.intrinsicName) {
+      parsedProperty.type = 'generic-constraint';
+      parsedProperty.value = genericTypeConstraint.intrinsicName;
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -474,25 +608,15 @@ export class TypeParser {
   private handleGenericPropertyWithArgumentInReferencedType(
     name: string,
     parsedProperty: ParsedProperty,
-    type: ts.Type,
+    tsNode: ts.Node,
     typeArguments?: ts.NodeArray<ts.TypeNode>,
   ) {
-    const genericTypeConstraint = type.getConstraint() as ts.Type & {
-      intrinsicName?: string;
-    };
-    if (genericTypeConstraint?.intrinsicName) {
-      parsedProperty.type = 'generic-constraint';
-      parsedProperty.value = genericTypeConstraint.intrinsicName;
+    const tsType = this.typeChecker.getTypeAtLocation(tsNode);
+    if (this.handleGenericPropertyAsConstraint(name, parsedProperty, tsType)) {
       return true;
     }
 
-    const properties = this.getTypeProperties(type);
-
-    if (properties.length !== 0) {
-      return false;
-    }
-
-    const symbol = type.symbol ?? type.aliasSymbol;
+    const symbol = tsType.symbol ?? tsType.aliasSymbol;
     if (!symbol) {
       return false;
     }
@@ -524,7 +648,7 @@ export class TypeParser {
       );
     if (genericParameterPosition == null) {
       // wrong type
-      return;
+      return false;
     }
 
     const argument = typeArguments.at(genericParameterPosition);
@@ -539,7 +663,7 @@ export class TypeParser {
       return true;
     }
 
-    return true;
+    return false;
   }
 
   /**
@@ -555,10 +679,10 @@ export class TypeParser {
   private handleGenericProperty(
     name: string,
     parsedProperty: ParsedProperty,
-    type: ts.Type,
     tsReferenceNode: ts.TypeReferenceNode,
   ) {
-    const properties = this.getTypeProperties(type);
+    const tsType = this.typeChecker.getTypeAtLocation(tsReferenceNode);
+    const properties = this.getTypeProperties(tsType);
     if (!properties.length) {
       return false;
     }
@@ -622,11 +746,12 @@ export class TypeParser {
   private handleMappedType(
     name: string,
     parsedProperty: ParsedProperty,
-    type: ts.Type,
     tsReferenceNode: ts.TypeReferenceNode,
     typeArguments?: ts.NodeArray<ts.TypeNode>,
   ) {
-    const { declaration } = type as unknown as { declaration?: ts.Node };
+    const tsType = this.typeChecker.getTypeAtLocation(tsReferenceNode);
+
+    const { declaration } = tsType as unknown as { declaration?: ts.Node };
     if (!declaration || !ts.isMappedTypeNode(declaration)) {
       return false;
     }

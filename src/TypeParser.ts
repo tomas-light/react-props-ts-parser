@@ -1,12 +1,10 @@
 import ts from 'typescript';
-import {
-  ParsedBigIntLiteral,
-  ParsedBooleanLiteral,
-  ParsedNumberLiteral,
-  ParsedProperty,
-  ParsedStringLiteral,
-  ParsedUnionType,
-} from './ParsedProperty';
+import { parseArrayType } from './parseArrayType';
+import { ParsedProperty } from './ParsedProperty';
+import { parseLiteralType } from './parseLiteralType';
+import { parsePrimitiveType } from './parsePrimitiveType';
+import { parseTypeAlias } from './parseTypeAlias';
+import { parseUnionType } from './parseUnionType';
 
 export class TypeParser {
   constructor(
@@ -34,12 +32,11 @@ export class TypeParser {
       } else if (ts.isTypeLiteralNode(childNode)) {
         this.parse(childNode.getFullText(), childNode);
       } else {
-        parsedProperty = this.createDescriptorForNode(
-          undefined,
-          childNode.getFullText(),
-          childNode,
+        parsedProperty = this.parseType({
+          debugName: childNode.getFullText(),
+          tsNode: childNode,
           typeArguments,
-        );
+        });
       }
 
       if (propertyName && parsedProperty) {
@@ -65,12 +62,12 @@ export class TypeParser {
         return;
       }
 
-      parsedProperty = this.createDescriptorForNode(
+      parsedProperty = this.parseType({
         parsedProperty,
-        tsNode.getFullText(),
-        grandChildNode,
+        debugName: tsNode.getFullText(),
+        tsNode: grandChildNode,
         typeArguments,
-      );
+      });
     });
 
     const nodeWithJsDoc = tsNode as unknown as { jsDoc: ts.NodeArray<ts.Node> };
@@ -96,32 +93,43 @@ export class TypeParser {
     };
   }
 
-  private createDescriptorForNode(
+  parseType(params: {
+    debugName: string;
+    tsNode: ts.Node;
     // it is required in cases when you process optional properties: QuestionToken will be adjusted to existed property descriptor instead of overriding it
-    parsedProperty: ParsedProperty | undefined,
-    name: string,
-    tsNode: ts.Node,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
-    if (!parsedProperty) {
-      parsedProperty = {} as ParsedProperty;
-    }
+    parsedProperty?: ParsedProperty;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }) {
+    const {
+      debugName,
+      tsNode,
+      parsedProperty = {} as ParsedProperty,
+      typeArguments,
+    } = params;
 
-    if (this.handlePrimitiveProperty(name, tsNode, parsedProperty)) {
+    if (parsePrimitiveType({ debugName, tsNode, parsedProperty })) {
       //
-    } else if (this.handleLiteralProperty(name, tsNode, parsedProperty)) {
-      //
-    } else if (this.handleUnionType(name, tsNode, parsedProperty)) {
-      //
-    } else if (this.handleArrayType(name, tsNode, parsedProperty)) {
+    } else if (parseLiteralType({ debugName, tsNode, parsedProperty })) {
       //
     } else if (
-      this.handleReferenceType(name, tsNode, parsedProperty, typeArguments)
+      parseUnionType.call(this, { debugName, tsNode, parsedProperty })
     ) {
       //
-    } else if (this.handleOptionalProperty(name, tsNode, parsedProperty)) {
+    } else if (
+      parseArrayType.call(this, { debugName, tsNode, parsedProperty })
+    ) {
       //
-    } else if (this.handleTypeAlias(name, tsNode, parsedProperty)) {
+    } else if (
+      this.handleReferenceType(debugName, tsNode, parsedProperty, typeArguments)
+    ) {
+      //
+    } else if (
+      this.handleQuestionToken({ debugName, tsNode, parsedProperty })
+    ) {
+      //
+    } else if (
+      parseTypeAlias.call(this, { debugName, tsNode, parsedProperty })
+    ) {
       //
     } else {
       parsedProperty.type = 'not-parsed';
@@ -131,188 +139,18 @@ export class TypeParser {
     return parsedProperty;
   }
 
-  private handlePrimitiveProperty(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-  ) {
-    if (tsNode.kind === ts.SyntaxKind.NumberKeyword) {
-      parsedProperty.type = 'number';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.BooleanKeyword) {
-      parsedProperty.type = 'boolean';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.StringKeyword) {
-      parsedProperty.type = 'string';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.UndefinedKeyword) {
-      parsedProperty.type = 'undefined';
-      return true;
-    }
-    if (
-      ts.isLiteralTypeNode(tsNode) &&
-      tsNode.literal.kind === ts.SyntaxKind.NullKeyword
-    ) {
-      parsedProperty.type = 'null';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.SymbolKeyword) {
-      parsedProperty.type = 'symbol';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.BigIntKeyword) {
-      parsedProperty.type = 'bigint';
-      return true;
-    }
-    if (ts.isFunctionTypeNode(tsNode)) {
-      parsedProperty.type = 'function';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.AnyKeyword) {
-      parsedProperty.type = 'any';
-      return true;
-    }
-    if (tsNode.kind === ts.SyntaxKind.UnknownKeyword) {
-      parsedProperty.type = 'unknown';
-      return true;
-    }
-    return false;
-  }
+  private handleQuestionToken(params: {
+    debugName: string;
+    tsNode: ts.Node;
+    parsedProperty: ParsedProperty;
+  }): boolean {
+    const { tsNode, parsedProperty, debugName } = params;
 
-  private handleLiteralProperty(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-  ) {
-    if (ts.isLiteralTypeNode(tsNode)) {
-      return handleLiterals(tsNode.literal);
-    }
-
-    return handleLiterals(tsNode);
-
-    function handleLiterals(tsNode: ts.Node) {
-      if (ts.isNumericLiteral(tsNode)) {
-        parsedProperty.type = 'number-literal';
-        (parsedProperty as ParsedNumberLiteral).value = parseInt(
-          tsNode.text,
-          10,
-        );
-        return true;
-      }
-
-      if (ts.isStringLiteral(tsNode)) {
-        parsedProperty.type = 'string-literal';
-        (parsedProperty as ParsedStringLiteral).value = tsNode.text;
-        return true;
-      }
-
-      if (ts.isBigIntLiteral(tsNode)) {
-        parsedProperty.type = 'bigint-literal';
-        try {
-          // "25n" => "25"
-          const sanitizedValue = tsNode.text.substring(
-            0,
-            tsNode.text.length - 1,
-          );
-          (parsedProperty as ParsedBigIntLiteral).value =
-            BigInt(sanitizedValue);
-        } catch (error) {
-          console.error(error);
-        }
-        return true;
-      }
-
-      if (tsNode.kind === ts.SyntaxKind.TrueKeyword) {
-        parsedProperty.type = 'boolean-literal';
-        (parsedProperty as ParsedBooleanLiteral).value = true;
-        return true;
-      }
-      if (tsNode.kind === ts.SyntaxKind.FalseKeyword) {
-        parsedProperty.type = 'boolean-literal';
-        (parsedProperty as ParsedBooleanLiteral).value = false;
-        return true;
-      }
-
-      return false;
-    }
-  }
-
-  private handleUnionType(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-  ) {
-    if (ts.isUnionTypeNode(tsNode)) {
-      parsedProperty.type = 'union-type';
-      parsedProperty.values = [];
-
-      tsNode.forEachChild((unionTypeNode) => {
-        const unionProperty = this.createDescriptorForNode(
-          undefined,
-          name,
-          unionTypeNode,
-        );
-        (parsedProperty as ParsedUnionType).values!.push(unionProperty as any);
-      });
-
-      return true;
-    }
-    return false;
-  }
-
-  private handleTypeAlias(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-  ) {
-    if (!ts.isTypeAliasDeclaration(tsNode)) {
-      return false;
-    }
-
-    tsNode.forEachChild((typeAliasNode) => {
-      if (!ts.isIdentifier(typeAliasNode)) {
-        this.createDescriptorForNode(parsedProperty, name, typeAliasNode);
-      }
-    });
-
-    return true;
-  }
-
-  private handleArrayType(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-  ) {
-    if (ts.isArrayTypeNode(tsNode)) {
-      parsedProperty.type = 'array';
-      parsedProperty.values = [];
-
-      tsNode.forEachChild((itemNode) => {
-        const itemProperty = this.createDescriptorForNode(
-          undefined,
-          itemNode.getFullText(),
-          itemNode,
-        );
-        (parsedProperty as ParsedUnionType).values!.push(itemProperty as any);
-      });
-
-      return true;
-    }
-    return false;
-  }
-
-  private handleOptionalProperty(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-  ) {
     if (ts.isQuestionToken(tsNode)) {
       parsedProperty.optional = true;
       return true;
     }
+
     return false;
   }
 
@@ -523,11 +361,11 @@ export class TypeParser {
         return true;
       }
 
-      this.createDescriptorForNode(
+      this.parseType({
+        debugName: declaration.getFullText(),
+        tsNode: declaration,
         parsedProperty,
-        declaration.getFullText(),
-        declaration,
-      );
+      });
       return true;
     }
 
@@ -618,12 +456,12 @@ export class TypeParser {
 
     const argument = typeArguments.at(genericParameterPosition);
     if (argument) {
-      this.createDescriptorForNode(
+      this.parseType({
+        debugName: declaration.getFullText(),
+        tsNode: argument,
         parsedProperty,
-        declaration.getFullText(),
-        argument,
         typeArguments,
-      );
+      });
 
       return true;
     }
@@ -674,11 +512,10 @@ export class TypeParser {
               return;
             }
 
-            nestedProperty = this.createDescriptorForNode(
-              undefined,
-              passedGenericType.getFullText(),
-              passedGenericType,
-            );
+            nestedProperty = this.parseType({
+              debugName: passedGenericType.getFullText(),
+              tsNode: passedGenericType,
+            });
           });
         } else {
           ({ propertyName, parsedProperty: nestedProperty } =

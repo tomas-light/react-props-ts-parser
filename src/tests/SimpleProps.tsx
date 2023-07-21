@@ -8,6 +8,7 @@ export type Props = {
   props_undefined: undefined;
   props_bigint: bigint;
   props_symbol: symbol;
+  props_function: () => void;
 };
 
 export const TestComponent: FC<Props> = () => null as any;

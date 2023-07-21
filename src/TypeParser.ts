@@ -38,6 +38,12 @@ export interface ParsedStringLiteral
 export interface ParsedNumberLiteral
   extends ParsedPropertyDescriptor<'number-literal', number> {}
 
+export interface ParsedBigIntLiteral
+  extends ParsedPropertyDescriptor<'bigint-literal', bigint> {}
+
+export interface ParsedBooleanLiteral
+  extends ParsedPropertyDescriptor<'boolean-literal', boolean> {}
+
 export interface ParsedUnionType
   extends ParsedPropertyDescriptor<'union-type', never, ParsedProperty> {}
 
@@ -73,6 +79,8 @@ export type ParsedProperty =
   | ParsedFunction
   | ParsedStringLiteral
   | ParsedNumberLiteral
+  | ParsedBigIntLiteral
+  | ParsedBooleanLiteral
   | ParsedUnionType
   | ParsedArray
   | ParsedObject
@@ -271,6 +279,33 @@ export class TypeParser {
       if (ts.isStringLiteral(tsNode)) {
         parsedProperty.type = 'string-literal';
         (parsedProperty as ParsedStringLiteral).value = tsNode.text;
+        return true;
+      }
+
+      if (ts.isBigIntLiteral(tsNode)) {
+        parsedProperty.type = 'bigint-literal';
+        try {
+          // "25n" => "25"
+          const sanitizedValue = tsNode.text.substring(
+            0,
+            tsNode.text.length - 1,
+          );
+          (parsedProperty as ParsedBigIntLiteral).value =
+            BigInt(sanitizedValue);
+        } catch (error) {
+          console.error(error);
+        }
+        return true;
+      }
+
+      if (tsNode.kind === ts.SyntaxKind.TrueKeyword) {
+        parsedProperty.type = 'boolean-literal';
+        (parsedProperty as ParsedBooleanLiteral).value = true;
+        return true;
+      }
+      if (tsNode.kind === ts.SyntaxKind.FalseKeyword) {
+        parsedProperty.type = 'boolean-literal';
+        (parsedProperty as ParsedBooleanLiteral).value = false;
         return true;
       }
 

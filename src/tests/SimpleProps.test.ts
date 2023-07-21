@@ -1,7 +1,6 @@
 import path from 'path';
 import { parsePropsInFile } from '../parsePropsInFile';
 import { compilerOptions } from './compilerOptions';
-import { Props } from './SimpleProps';
 
 describe('[primitives]', () => {
   const componentPath = path.join(__dirname, 'SimpleProps.tsx');
@@ -40,6 +39,11 @@ describe('[primitives]', () => {
   test('props_symbol', () => {
     expect(parsed?.['props_symbol']).toEqual({
       type: 'symbol',
+    });
+  });
+  test('props_function', () => {
+    expect(parsed?.['props_function']).toEqual({
+      type: 'function',
     });
   });
 });

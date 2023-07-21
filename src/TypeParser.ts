@@ -225,7 +225,10 @@ export class TypeParser {
       parsedProperty.type = 'undefined';
       return true;
     }
-    if (tsNode.kind === ts.SyntaxKind.NullKeyword) {
+    if (
+      ts.isLiteralTypeNode(tsNode) &&
+      tsNode.literal.kind === ts.SyntaxKind.NullKeyword
+    ) {
       parsedProperty.type = 'null';
       return true;
     }
@@ -233,7 +236,7 @@ export class TypeParser {
       parsedProperty.type = 'symbol';
       return true;
     }
-    if (tsNode.kind === ts.SyntaxKind.BigIntLiteral) {
+    if (tsNode.kind === ts.SyntaxKind.BigIntKeyword) {
       parsedProperty.type = 'bigint';
       return true;
     }

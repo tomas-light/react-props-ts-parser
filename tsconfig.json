@@ -13,6 +13,7 @@
     "sourceMap": true,
     "strict": true,
     "strictNullChecks": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "jsx": "react-jsx"
   }
 }

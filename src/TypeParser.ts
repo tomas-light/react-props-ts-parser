@@ -31,6 +31,8 @@ export interface ParsedBigint extends ParsedPropertyDescriptor<'bigint'> {}
 export interface ParsedNull extends ParsedPropertyDescriptor<'null'> {}
 
 export interface ParsedFunction extends ParsedPropertyDescriptor<'function'> {}
+export interface ParsedAny extends ParsedPropertyDescriptor<'any'> {}
+export interface ParsedUnknown extends ParsedPropertyDescriptor<'unknown'> {}
 
 export interface ParsedStringLiteral
   extends ParsedPropertyDescriptor<'string-literal', string> {}
@@ -77,6 +79,8 @@ export type ParsedProperty =
   | ParsedBigint
   | ParsedNull
   | ParsedFunction
+  | ParsedAny
+  | ParsedUnknown
   | ParsedStringLiteral
   | ParsedNumberLiteral
   | ParsedBigIntLiteral
@@ -250,6 +254,14 @@ export class TypeParser {
     }
     if (ts.isFunctionTypeNode(tsNode)) {
       parsedProperty.type = 'function';
+      return true;
+    }
+    if (tsNode.kind === ts.SyntaxKind.AnyKeyword) {
+      parsedProperty.type = 'any';
+      return true;
+    }
+    if (tsNode.kind === ts.SyntaxKind.UnknownKeyword) {
+      parsedProperty.type = 'unknown';
       return true;
     }
     return false;

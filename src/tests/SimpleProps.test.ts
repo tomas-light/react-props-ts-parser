@@ -46,4 +46,14 @@ describe('[primitives]', () => {
       type: 'function',
     });
   });
+  test('props_any', () => {
+    expect(parsed?.['props_any']).toEqual({
+      type: 'any',
+    });
+  });
+  test('props_unknown', () => {
+    expect(parsed?.['props_unknown']).toEqual({
+      type: 'unknown',
+    });
+  });
 });

@@ -65,7 +65,7 @@ to JSON:
     "type": "boolean",
     "jsDoc": {
       "comment": "my property description",
-      "fullText": "/**\n   * my property description\n   * @example\n   * <TestComponent open={true} />\n   */"
+      "fullText": "/**\n     * my property description\n     * @example\n     * <TestComponent open={true} />\n     */"
     }
   },
   "onClick": {

@@ -3,24 +3,49 @@ import {
   ParsedBigIntLiteral,
   ParsedBooleanLiteral,
   ParsedNumberLiteral,
+  ParsedObject,
   ParsedProperty,
   ParsedStringLiteral,
 } from './ParsedProperty';
 
-export function parseLiteralType(params: {
-  debugName: string;
-  tsNode: ts.Node;
-  parsedProperty: ParsedProperty;
-}): boolean {
-  const { tsNode, parsedProperty, debugName } = params;
+export function parseLiteralType(
+  this: {
+    parsePropertySignatureNode(params: {
+      debugName?: string;
+      tsNode: ts.Node;
+      typeArguments?: ts.NodeArray<ts.TypeNode>;
+    }): {
+      propertyName: string | undefined;
+      parsedProperty: ParsedProperty | undefined;
+    };
+  },
+  params: {
+    debugName?: string;
+    tsNode: ts.Node;
+    parsedProperty: ParsedProperty;
+  },
+): boolean {
+  const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
 
   if (ts.isLiteralTypeNode(tsNode)) {
-    return handleLiterals(tsNode.literal);
+    return handleLiterals.call(this, tsNode.literal);
   }
 
-  return handleLiterals(tsNode);
+  return handleLiterals.call(this, tsNode);
 
-  function handleLiterals(tsNode: ts.Node) {
+  function handleLiterals(
+    this: {
+      parsePropertySignatureNode(params: {
+        debugName?: string;
+        tsNode: ts.Node;
+        typeArguments?: ts.NodeArray<ts.TypeNode>;
+      }): {
+        propertyName: string | undefined;
+        parsedProperty: ParsedProperty | undefined;
+      };
+    },
+    tsNode: ts.Node,
+  ) {
     if (ts.isNumericLiteral(tsNode)) {
       parsedProperty.type = 'number-literal';
       (parsedProperty as ParsedNumberLiteral).value = parseInt(tsNode.text, 10);
@@ -54,6 +79,26 @@ export function parseLiteralType(params: {
     if (tsNode.kind === ts.SyntaxKind.FalseKeyword) {
       parsedProperty.type = 'boolean-literal';
       (parsedProperty as ParsedBooleanLiteral).value = false;
+      return true;
+    }
+
+    if (tsNode.kind === ts.SyntaxKind.TypeLiteral) {
+      const parsedObject = parsedProperty as ParsedObject;
+
+      parsedObject.type = 'object';
+      parsedObject.value = {};
+
+      tsNode.forEachChild((itemNode) => {
+        const { propertyName, parsedProperty: objectProperty } =
+          this.parsePropertySignatureNode({
+            tsNode: itemNode,
+          });
+
+        if (propertyName && objectProperty) {
+          parsedObject.value![propertyName] = objectProperty;
+        }
+      });
+
       return true;
     }
 

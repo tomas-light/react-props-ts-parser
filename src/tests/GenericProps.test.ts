@@ -9,14 +9,14 @@ describe('[generic types]', () => {
 
   test('props_set', () => {
     expect(parsed?.['props_set']).toEqual({
-      type: 'imported-type',
+      type: 'not-parsed',
       value: 'Set<number>',
     } satisfies ParsedProperty);
   });
 
   test('props_map', () => {
     expect(parsed?.['props_map']).toEqual({
-      type: 'imported-type',
+      type: 'not-parsed',
       value: 'Map<number, Item>',
     } satisfies ParsedProperty);
   });

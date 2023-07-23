@@ -3,7 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist"
   },
-  "exclude": ["src/TestComponent.tsx",
-    "src/parsePropsInFile.test.ts"
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.tsx",
+    "src/**/*.test.ts",
+    "src/test/**/*"
   ]
 }

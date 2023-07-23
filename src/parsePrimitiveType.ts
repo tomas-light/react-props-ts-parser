@@ -2,30 +2,51 @@ import ts from 'typescript';
 import { ParsedProperty } from './ParsedProperty';
 
 export function parsePrimitiveType(params: {
-  debugName: string;
+  debugName?: string;
   tsNode: ts.Node;
   parsedProperty: ParsedProperty;
 }): boolean {
-  const { tsNode, parsedProperty, debugName } = params;
+  const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
 
-  if (tsNode.kind === ts.SyntaxKind.NumberKeyword) {
-    parsedProperty.type = 'number';
-    return true;
-  }
+  switch (tsNode.kind) {
+    case ts.SyntaxKind.NumberKeyword:
+      parsedProperty.type = 'number';
+      return true;
 
-  if (tsNode.kind === ts.SyntaxKind.BooleanKeyword) {
-    parsedProperty.type = 'boolean';
-    return true;
-  }
+    case ts.SyntaxKind.BooleanKeyword:
+      parsedProperty.type = 'boolean';
+      return true;
 
-  if (tsNode.kind === ts.SyntaxKind.StringKeyword) {
-    parsedProperty.type = 'string';
-    return true;
-  }
+    case ts.SyntaxKind.StringKeyword:
+      parsedProperty.type = 'string';
+      return true;
 
-  if (tsNode.kind === ts.SyntaxKind.UndefinedKeyword) {
-    parsedProperty.type = 'undefined';
-    return true;
+    case ts.SyntaxKind.UndefinedKeyword:
+      parsedProperty.type = 'undefined';
+      return true;
+
+    case ts.SyntaxKind.SymbolKeyword:
+      parsedProperty.type = 'symbol';
+      return true;
+
+    case ts.SyntaxKind.BigIntKeyword:
+      parsedProperty.type = 'bigint';
+      return true;
+
+    case ts.SyntaxKind.AnyKeyword:
+      parsedProperty.type = 'any';
+      return true;
+
+    case ts.SyntaxKind.UnknownKeyword:
+      parsedProperty.type = 'unknown';
+      return true;
+
+    case ts.SyntaxKind.FunctionType:
+    case ts.SyntaxKind.FunctionExpression:
+    case ts.SyntaxKind.FunctionKeyword:
+    case ts.SyntaxKind.FunctionDeclaration:
+      parsedProperty.type = 'function';
+      return true;
   }
 
   if (
@@ -33,31 +54,6 @@ export function parsePrimitiveType(params: {
     tsNode.literal.kind === ts.SyntaxKind.NullKeyword
   ) {
     parsedProperty.type = 'null';
-    return true;
-  }
-
-  if (tsNode.kind === ts.SyntaxKind.SymbolKeyword) {
-    parsedProperty.type = 'symbol';
-    return true;
-  }
-
-  if (tsNode.kind === ts.SyntaxKind.BigIntKeyword) {
-    parsedProperty.type = 'bigint';
-    return true;
-  }
-
-  if (ts.isFunctionTypeNode(tsNode)) {
-    parsedProperty.type = 'function';
-    return true;
-  }
-
-  if (tsNode.kind === ts.SyntaxKind.AnyKeyword) {
-    parsedProperty.type = 'any';
-    return true;
-  }
-
-  if (tsNode.kind === ts.SyntaxKind.UnknownKeyword) {
-    parsedProperty.type = 'unknown';
     return true;
   }
 

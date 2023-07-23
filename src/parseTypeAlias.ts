@@ -4,25 +4,28 @@ import { ParsedProperty } from './ParsedProperty';
 export function parseTypeAlias(
   this: {
     parseType: (params: {
-      debugName: string;
+      debugName?: string;
       tsNode: ts.Node;
       parsedProperty: ParsedProperty;
     }) => ParsedProperty;
   },
   params: {
-    debugName: string;
+    debugName?: string;
     tsNode: ts.Node;
     parsedProperty: ParsedProperty;
   },
 ): boolean {
-  const { tsNode, parsedProperty, debugName } = params;
+  const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
 
   if (!ts.isTypeAliasDeclaration(tsNode)) {
     return false;
   }
 
   tsNode.forEachChild((typeAliasNode) => {
-    if (!ts.isIdentifier(typeAliasNode)) {
+    if (
+      !ts.isIdentifier(typeAliasNode) &&
+      typeAliasNode.kind !== ts.SyntaxKind.ExportKeyword
+    ) {
       this.parseType({
         debugName: debugName,
         tsNode: typeAliasNode,

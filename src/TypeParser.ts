@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { parseArrayType } from './parseArrayType';
 import { ParsedProperty } from './ParsedProperty';
+import { parseImportedType } from './parseImportedType';
 import { parseLiteralType } from './parseLiteralType';
 import { parsePrimitiveType } from './parsePrimitiveType';
 import { parseTypeAlias } from './parseTypeAlias';
@@ -8,7 +9,8 @@ import { parseUnionType } from './parseUnionType';
 
 export class TypeParser {
   constructor(
-    private readonly typeChecker: ts.TypeChecker,
+    public readonly typeChecker: ts.TypeChecker,
+    public readonly sourceFile: ts.SourceFile,
     private readonly properties: {
       [propertyName: string]: ParsedProperty;
     } = {},
@@ -24,11 +26,11 @@ export class TypeParser {
       let parsedProperty: ParsedProperty | undefined;
 
       if (ts.isPropertySignature(childNode)) {
-        ({ propertyName, parsedProperty } = this.parsePropertySignatureNode(
-          name,
-          childNode,
+        ({ propertyName, parsedProperty } = this.parsePropertySignatureNode({
+          debugName: name,
+          tsNode: childNode,
           typeArguments,
-        ));
+        }));
       } else if (ts.isTypeLiteralNode(childNode)) {
         this.parse(childNode.getFullText(), childNode);
       } else {
@@ -47,11 +49,16 @@ export class TypeParser {
     return this.properties;
   }
 
-  parsePropertySignatureNode(
-    name: string,
-    tsNode: ts.Node,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
+  parsePropertySignatureNode(params: {
+    debugName?: string;
+    tsNode: ts.Node;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }): {
+    propertyName: string | undefined;
+    parsedProperty: ParsedProperty | undefined;
+  } {
+    const { tsNode, typeArguments, debugName = tsNode.getFullText() } = params;
+
     let propertyName: string | undefined;
     let parsedProperty: ParsedProperty | undefined;
 
@@ -94,22 +101,24 @@ export class TypeParser {
   }
 
   parseType(params: {
-    debugName: string;
+    debugName?: string;
     tsNode: ts.Node;
     // it is required in cases when you process optional properties: QuestionToken will be adjusted to existed property descriptor instead of overriding it
     parsedProperty?: ParsedProperty;
     typeArguments?: ts.NodeArray<ts.TypeNode>;
   }) {
     const {
-      debugName,
       tsNode,
+      debugName = tsNode.getFullText(),
       parsedProperty = {} as ParsedProperty,
       typeArguments,
     } = params;
 
     if (parsePrimitiveType({ debugName, tsNode, parsedProperty })) {
       //
-    } else if (parseLiteralType({ debugName, tsNode, parsedProperty })) {
+    } else if (
+      parseLiteralType.call(this, { debugName, tsNode, parsedProperty })
+    ) {
       //
     } else if (
       parseUnionType.call(this, { debugName, tsNode, parsedProperty })
@@ -165,7 +174,11 @@ export class TypeParser {
       return false;
     }
 
-    if (this.handleImportedTypes(name, parsedProperty, tsNode, typeArguments)) {
+    if (parseImportedType.call(this, { parsedProperty, tsNode })) {
+      return true;
+    } else if (
+      this.handleLocalDefinedType(name, parsedProperty, tsNode, typeArguments)
+    ) {
       return true;
     } else if (
       this.handleMappedType(name, parsedProperty, tsNode, typeArguments)
@@ -187,125 +200,7 @@ export class TypeParser {
     return false;
   }
 
-  // private findImports() {
-  //   const imports: {
-  //     identifier: ts.Identifier;
-  //     nameFromWhereImportIs: string;
-  //   }[] = [];
-  //
-  //   ts.forEachChild(this.sourceFile, (node) => {
-  //     if (ts.isImportDeclaration(node)) {
-  //       let nameFromWhereImportIs: string | undefined;
-  //       const identifiers: ts.Identifier[] = [];
-  //
-  //       node.forEachChild((importNode) => {
-  //         if (ts.isStringLiteral(importNode)) {
-  //           nameFromWhereImportIs = importNode.getFullText();
-  //         } else if (ts.isImportClause(importNode)) {
-  //           importNode.forEachChild((importClauseNode) => {
-  //             if (ts.isIdentifier(importClauseNode)) {
-  //               identifiers.push(importClauseNode);
-  //             } else if (ts.isNamedImports(importClauseNode)) {
-  //               importClauseNode.forEachChild((namedImportNode) => {
-  //                 if (ts.isImportSpecifier(namedImportNode)) {
-  //                   namedImportNode.forEachChild((importSpecifier) => {
-  //                     if (ts.isIdentifier(importSpecifier)) {
-  //                       identifiers.push(importSpecifier);
-  //                     }
-  //                   });
-  //                 }
-  //               });
-  //             }
-  //           });
-  //         }
-  //       });
-  //
-  //       if (nameFromWhereImportIs) {
-  //         identifiers.forEach((identifier) => {
-  //           imports.push({
-  //             identifier,
-  //             nameFromWhereImportIs: nameFromWhereImportIs!,
-  //           });
-  //         });
-  //       }
-  //     }
-  //   });
-  //
-  //   return imports;
-  // }
-  //
-  // private getTypeExportedModule(tsType: ts.Type, tsNode: ts.Node) {
-  //   if (ts.isExternalModuleReference(tsNode)) {
-  //     // todo: doesn't work. Can it help with React imports detection?
-  //     debugger;
-  //     console.log('debugger');
-  //     return tsType.aliasSymbol;
-  //   }
-  //   if (ts.isExternalModuleNameRelative(tsNode.getFullText())) {
-  //     // todo: doesn't work. Can it help with React imports detection?
-  //     debugger;
-  //     console.log('debugger');
-  //     return tsType.aliasSymbol;
-  //   }
-  //   if (ts.isExternalModuleReference(tsNode)) {
-  //     // todo: doesn't work. Can it help with React imports detection?
-  //     debugger;
-  //     console.log('debugger');
-  //     return tsType.aliasSymbol;
-  //   }
-  //   if (ts.isModuleBlock(tsNode)) {
-  //     // todo: doesn't work. Can it help with React imports detection?
-  //     debugger;
-  //     console.log('debugger');
-  //     return tsType.aliasSymbol;
-  //   }
-  //   if (ts.isModuleDeclaration(tsNode)) {
-  //     // todo: doesn't work. Can it help with React imports detection?
-  //     debugger;
-  //     console.log('debugger');
-  //     return tsType.aliasSymbol;
-  //   }
-  //   if (ts.isModuleReference(tsNode)) {
-  //     // todo: doesn't work. Can it help with React imports detection?
-  //     debugger;
-  //     console.log('debugger');
-  //     return tsType.aliasSymbol;
-  //   }
-  //
-  //   let module = (tsType.symbol ?? tsType.aliasSymbol) as ts.Symbol & {
-  //     parent?: ts.Symbol;
-  //   };
-  //
-  //   while (module?.parent) {
-  //     module = module.parent;
-  //     if (ts.isExternalModuleReference(module as any)) {
-  //       // todo: doesn't work. Can it help with React imports detection?
-  //       debugger;
-  //       console.log('debugger');
-  //       break;
-  //     }
-  //     if (ts.isExternalModuleNameRelative(module.name)) {
-  //       // todo: doesn't work. Can it help with React imports detection?
-  //       debugger;
-  //       console.log('debugger');
-  //       break;
-  //     }
-  //     if (ts.isExternalModuleReference(module as any)) {
-  //       // todo: doesn't work. Can it help with React imports detection?
-  //       debugger;
-  //       console.log('debugger');
-  //       break;
-  //     }
-  //     if (module.exports) {
-  //       // we assume that it is React root type
-  //       break;
-  //     }
-  //   }
-  //
-  //   return module as ts.Symbol;
-  // }
-
-  private handleImportedTypes(
+  private handleLocalDefinedType(
     name: string,
     parsedProperty: ParsedProperty,
     tsNode: ts.Node,
@@ -324,29 +219,13 @@ export class TypeParser {
       return false;
     }
 
-    const isImport = symbolDeclarations.some(
-      (declaration) =>
-        ts.isImportSpecifier(declaration) ||
-        ts.isImportClause(declaration) ||
-        ts.isExternalModuleReference(declaration),
-    );
+    const [declaration] = symbolDeclarations;
 
-    if (isImport) {
-      parsedProperty.type = 'imported-type';
-      parsedProperty.value = tsNode.getFullText().trim();
-      return true;
-    }
-
-    if (symbolDeclarations.length === 1) {
-      const [declaration] = symbolDeclarations;
-      // if (
-      //   ts.isInterfaceDeclaration(declaration) ||
-      //   ts.isTypeAliasDeclaration(declaration)
-      // ) {
-      //   if (declaration.typeParameters?.length) {
-      //     return false;
-      //   }
-      // }
+    if (
+      symbolDeclarations.length === 1 &&
+      (ts.isTypeAliasDeclaration(declaration) ||
+        ts.isInterfaceDeclaration(declaration))
+    ) {
       if (
         typeArguments?.length ||
         (tsNode as { typeArguments?: unknown[] }).typeArguments?.length
@@ -519,11 +398,10 @@ export class TypeParser {
           });
         } else {
           ({ propertyName, parsedProperty: nestedProperty } =
-            this.parsePropertySignatureNode(
-              propertySymbol.valueDeclaration.getFullText(),
-              propertySymbol.valueDeclaration,
-              tsReferenceNode.typeArguments,
-            ));
+            this.parsePropertySignatureNode({
+              tsNode: propertySymbol.valueDeclaration,
+              typeArguments: tsReferenceNode.typeArguments,
+            }));
         }
 
         if (propertyName && nestedProperty) {

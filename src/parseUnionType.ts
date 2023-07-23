@@ -3,34 +3,32 @@ import { ParsedProperty, ParsedUnionType } from './ParsedProperty';
 
 export function parseUnionType(
   this: {
-    parseType: (params: {
-      debugName: string;
-      tsNode: ts.Node;
-    }) => ParsedProperty;
+    parseType: (params: { tsNode: ts.Node }) => ParsedProperty;
   },
   params: {
-    debugName: string;
+    debugName?: string;
     tsNode: ts.Node;
     parsedProperty: ParsedProperty;
   },
 ): boolean {
-  const { tsNode, parsedProperty, debugName } = params;
+  const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
 
-  if (ts.isUnionTypeNode(tsNode)) {
-    parsedProperty.type = 'union-type';
-    parsedProperty.values = [];
-
-    tsNode.forEachChild((unionTypeNode) => {
-      const unionProperty = this.parseType({
-        tsNode: unionTypeNode,
-        debugName: debugName,
-      });
-
-      (parsedProperty as ParsedUnionType).values!.push(unionProperty);
-    });
-
-    return true;
+  if (!ts.isUnionTypeNode(tsNode)) {
+    return false;
   }
 
-  return false;
+  const unionType = parsedProperty as ParsedUnionType;
+
+  unionType.type = 'union-type';
+  unionType.values = [];
+
+  tsNode.forEachChild((childNode) => {
+    const unionProperty = this.parseType({
+      tsNode: childNode,
+    });
+
+    unionType.values!.push(unionProperty);
+  });
+
+  return true;
 }

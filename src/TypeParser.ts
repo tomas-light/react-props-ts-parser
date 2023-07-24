@@ -405,7 +405,7 @@ export class TypeParser {
         }
 
         if (propertyName && nestedProperty) {
-          parsedProperty[propertyName as keyof ParsedProperty] =
+          parsedProperty.value[propertyName as keyof ParsedProperty] =
             nestedProperty as never;
         }
       }

@@ -98,20 +98,22 @@ to JSON:
       {
         "type": "object",
         "value": {
-          "type": "number"
-        },
-        "label": {
-          "type": "union-type",
-          "values": [
-            {
-              "type": "string-literal",
-              "value": "name"
-            },
-            {
-              "type": "string-literal",
-              "value": "title"
-            }
-          ]
+          "label": {
+            "type": "union-type",
+            "values": [
+              {
+                "type": "string-literal",
+                "value": "name"
+              },
+              {
+                "type": "string-literal",
+                "value": "title"
+              }
+            ]
+          },
+          "value": {
+            "type": "number"
+          }
         }
       }
     ]

@@ -1,6 +1,6 @@
 {
   "name": "react-props-ts-parser",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Get React component Props as JSON to be able to render documentation for your component based on Typescript definition",
   "author": "Artem Ignatev <art.ser.ignatiev@gmail.com>",
   "repository": "git@github.com:tomas-light/react-props-ts-parser.git",

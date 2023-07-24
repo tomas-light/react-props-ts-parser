@@ -23,8 +23,20 @@ describe('[generic types]', () => {
 
   test('props_array', () => {
     expect(parsed?.['props_array']).toEqual({
-      type: 'imported-type',
-      value: 'Array<Item>',
+      type: 'array',
+      values: [
+        {
+          type: 'object',
+          value: {
+            age: {
+              type: 'number',
+            },
+            name: {
+              type: 'string',
+            },
+          },
+        },
+      ],
     } satisfies ParsedProperty);
   });
 

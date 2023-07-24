@@ -1,8 +1,10 @@
 import ts from 'typescript';
+import { getTypeReferenceIdentifier } from './getTypeReferenceIdentifier';
 import { ParsedArray, ParsedProperty } from './ParsedProperty';
 
 export function parseArrayType(
   this: {
+    typeChecker: ts.TypeChecker;
     parseType: (params: { tsNode: ts.Node }) => ParsedProperty;
   },
   params: {
@@ -12,9 +14,26 @@ export function parseArrayType(
   },
 ): boolean {
   const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
+  const arrayNode = tsNode;
 
   if (!ts.isArrayTypeNode(tsNode)) {
-    return false;
+    if (ts.isTypeReferenceNode(tsNode)) {
+      const identifier = getTypeReferenceIdentifier(tsNode);
+
+      let identifierSymbol: ts.Symbol | undefined;
+      if (identifier) {
+        identifierSymbol = this.typeChecker.getSymbolAtLocation(identifier);
+      }
+
+      const typeName = identifierSymbol?.getName();
+      if (typeName && ['Array', 'ReadonlyArray'].includes(typeName)) {
+        // use tsNode as nodeArray
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   const parsedArrayProperty = parsedProperty as ParsedArray;
@@ -22,7 +41,12 @@ export function parseArrayType(
   parsedArrayProperty.type = 'array';
   parsedArrayProperty.values = [];
 
-  tsNode.forEachChild((itemNode) => {
+  arrayNode.forEachChild((itemNode) => {
+    // skip Array or ReadonlyArray identifier
+    if (ts.isIdentifier(itemNode)) {
+      return;
+    }
+
     const itemProperty = this.parseType({
       tsNode: itemNode,
     });

@@ -2,6 +2,7 @@ import ts from 'typescript';
 import { parseArrayType } from './parseArrayType';
 import { ParsedProperty } from './ParsedProperty';
 import { parseImportedType } from './parseImportedType';
+import { parseInterfaceDeclaration } from './parseInterfaceDeclaration';
 import { parseLiteralType } from './parseLiteralType';
 import { parsePrimitiveType } from './parsePrimitiveType';
 import { parseTypeAlias } from './parseTypeAlias';
@@ -124,9 +125,7 @@ export class TypeParser {
       parseUnionType.call(this, { debugName, tsNode, parsedProperty })
     ) {
       //
-    } else if (
-      parseArrayType.call(this, { debugName, tsNode, parsedProperty })
-    ) {
+    } else if (parseArrayType.call(this, { tsNode, parsedProperty })) {
       //
     } else if (
       this.handleReferenceType({
@@ -142,7 +141,17 @@ export class TypeParser {
     ) {
       //
     } else if (
-      parseTypeAlias.call(this, { debugName, tsNode, parsedProperty })
+      parseTypeAlias.call(this, {
+        tsNode,
+        parsedProperty,
+      })
+    ) {
+      //
+    } else if (
+      parseInterfaceDeclaration.call(this, {
+        tsNode,
+        parsedProperty,
+      })
     ) {
       //
     } else {

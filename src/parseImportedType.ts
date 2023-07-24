@@ -1,5 +1,6 @@
 import ts from 'typescript';
 import { findImports } from './findImports';
+import { getTypeReferenceIdentifier } from './getTypeReferenceIdentifier';
 import { ParsedProperty } from './ParsedProperty';
 
 export function parseImportedType(
@@ -23,15 +24,11 @@ export function parseImportedType(
     return false;
   }
 
-  let identifierSymbol: ts.Symbol | undefined;
-  let identifier: ts.Identifier | undefined;
+  const identifier = getTypeReferenceIdentifier(tsNode);
 
-  for (const nodeChild of tsNode.getChildren()) {
-    if (ts.isIdentifier(nodeChild)) {
-      identifierSymbol = this.typeChecker.getSymbolAtLocation(nodeChild);
-      identifier = nodeChild;
-      break;
-    }
+  let identifierSymbol: ts.Symbol | undefined;
+  if (identifier) {
+    identifierSymbol = this.typeChecker.getSymbolAtLocation(identifier);
   }
 
   const symbolDeclarations = identifierSymbol?.getDeclarations();

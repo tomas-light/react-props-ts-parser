@@ -129,7 +129,12 @@ export class TypeParser {
     ) {
       //
     } else if (
-      this.handleReferenceType(debugName, tsNode, parsedProperty, typeArguments)
+      this.handleReferenceType({
+        debugName,
+        tsNode,
+        parsedProperty,
+        typeArguments,
+      })
     ) {
       //
     } else if (
@@ -149,11 +154,11 @@ export class TypeParser {
   }
 
   private handleQuestionToken(params: {
-    debugName: string;
+    debugName?: string;
     tsNode: ts.Node;
     parsedProperty: ParsedProperty;
   }): boolean {
-    const { tsNode, parsedProperty, debugName } = params;
+    const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
 
     if (ts.isQuestionToken(tsNode)) {
       parsedProperty.optional = true;
@@ -164,12 +169,19 @@ export class TypeParser {
   }
 
   // todo: WIP
-  private handleReferenceType(
-    name: string,
-    tsNode: ts.Node,
-    parsedProperty: ParsedProperty,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
+  private handleReferenceType(params: {
+    debugName?: string;
+    tsNode: ts.Node;
+    parsedProperty: ParsedProperty;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }) {
+    const {
+      tsNode,
+      parsedProperty,
+      debugName = tsNode.getFullText(),
+      typeArguments,
+    } = params;
+
     if (!ts.isTypeReferenceNode(tsNode)) {
       return false;
     }
@@ -177,35 +189,54 @@ export class TypeParser {
     if (parseImportedType.call(this, { parsedProperty, tsNode })) {
       return true;
     } else if (
-      this.handleLocalDefinedType(name, parsedProperty, tsNode, typeArguments)
-    ) {
-      return true;
-    } else if (
-      this.handleMappedType(name, parsedProperty, tsNode, typeArguments)
-    ) {
-      return true;
-    } else if (
-      this.handleGenericPropertyWithArgumentInReferencedType(
-        name,
+      this.handleLocalDefinedType({
         parsedProperty,
         tsNode,
-        typeArguments ?? tsNode.typeArguments,
-      )
+        typeArguments,
+      })
     ) {
       return true;
-    } else if (this.handleGenericProperty(name, parsedProperty, tsNode)) {
+    } else if (
+      this.handleMappedType({
+        parsedProperty,
+        tsReferenceNode: tsNode,
+        typeArguments,
+      })
+    ) {
+      return true;
+    } else if (
+      this.handleGenericPropertyWithArgumentInReferencedType({
+        parsedProperty,
+        tsNode,
+        typeArguments: typeArguments ?? tsNode.typeArguments,
+      })
+    ) {
+      return true;
+    } else if (
+      this.handleGenericProperty({
+        parsedProperty,
+        tsReferenceNode: tsNode,
+      })
+    ) {
       return true;
     }
 
     return false;
   }
 
-  private handleLocalDefinedType(
-    name: string,
-    parsedProperty: ParsedProperty,
-    tsNode: ts.Node,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
+  private handleLocalDefinedType(params: {
+    debugName?: string;
+    tsNode: ts.Node;
+    parsedProperty: ParsedProperty;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }) {
+    const {
+      tsNode,
+      parsedProperty,
+      debugName = tsNode.getFullText(),
+      typeArguments,
+    } = params;
+
     let identifierSymbol: ts.Symbol | undefined;
     for (const nodeChild of tsNode.getChildren()) {
       if (ts.isIdentifier(nodeChild)) {
@@ -235,7 +266,11 @@ export class TypeParser {
 
       const tsType = this.typeChecker.getTypeAtLocation(tsNode);
       if (
-        this.handleGenericPropertyAsConstraint(name, parsedProperty, tsType)
+        this.handleGenericPropertyAsConstraint({
+          debugName,
+          parsedProperty,
+          tsType,
+        })
       ) {
         return true;
       }
@@ -260,18 +295,32 @@ export class TypeParser {
     );
   }
 
-  private handleGenericPropertyAsConstraint(
-    name: string,
-    parsedProperty: ParsedProperty,
-    type: ts.Type,
-  ) {
-    const genericTypeConstraint = type.getConstraint() as ts.Type & {
+  private handleGenericPropertyAsConstraint(params: {
+    debugName?: string;
+    parsedProperty: ParsedProperty;
+    tsType: ts.Type;
+  }) {
+    const { parsedProperty, debugName, tsType } = params;
+
+    const genericTypeConstraint = tsType.getConstraint() as ts.Type & {
       intrinsicName?: string;
     };
-    if (genericTypeConstraint?.intrinsicName) {
-      parsedProperty.type = 'generic-constraint';
-      parsedProperty.value = genericTypeConstraint.intrinsicName;
-      return true;
+    if (genericTypeConstraint) {
+      const genericDefault = tsType.getDefault() as ts.Type & {
+        intrinsicName?: string;
+      };
+
+      if (genericDefault?.intrinsicName) {
+        parsedProperty.type = 'generic-constraint';
+        parsedProperty.value = genericDefault.intrinsicName;
+        return true;
+      }
+
+      if (genericTypeConstraint.intrinsicName) {
+        parsedProperty.type = 'generic-constraint';
+        parsedProperty.value = genericTypeConstraint.intrinsicName;
+        return true;
+      }
     }
 
     return false;
@@ -287,14 +336,21 @@ export class TypeParser {
    *   someProp: MyGeneric<string>;
    * };
    * */
-  private handleGenericPropertyWithArgumentInReferencedType(
-    name: string,
-    parsedProperty: ParsedProperty,
-    tsNode: ts.Node,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
+  private handleGenericPropertyWithArgumentInReferencedType(params: {
+    debugName?: string;
+    tsNode: ts.Node;
+    parsedProperty: ParsedProperty;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }) {
+    const {
+      tsNode,
+      parsedProperty,
+      debugName = tsNode.getFullText(),
+      typeArguments,
+    } = params;
+
     const tsType = this.typeChecker.getTypeAtLocation(tsNode);
-    if (this.handleGenericPropertyAsConstraint(name, parsedProperty, tsType)) {
+    if (this.handleGenericPropertyAsConstraint({ parsedProperty, tsType })) {
       return true;
     }
 
@@ -358,11 +414,17 @@ export class TypeParser {
    *   someProp: MyGeneric<string>; // <-- here we go (param 'type' === MyGeneric)
    * };
    * */
-  private handleGenericProperty(
-    name: string,
-    parsedProperty: ParsedProperty,
-    tsReferenceNode: ts.TypeReferenceNode,
-  ) {
+  private handleGenericProperty(params: {
+    debugName?: string;
+    tsReferenceNode: ts.TypeReferenceNode;
+    parsedProperty: ParsedProperty;
+  }) {
+    const {
+      tsReferenceNode,
+      parsedProperty,
+      debugName = tsReferenceNode.getFullText(),
+    } = params;
+
     const tsType = this.typeChecker.getTypeAtLocation(tsReferenceNode);
     const properties = this.getTypeProperties(tsType);
     if (!properties.length) {
@@ -423,12 +485,19 @@ export class TypeParser {
    *   [P in K]: T; <---- declaration/mappedTypeNode
    * };
    * */
-  private handleMappedType(
-    name: string,
-    parsedProperty: ParsedProperty,
-    tsReferenceNode: ts.TypeReferenceNode,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
+  private handleMappedType(params: {
+    debugName?: string;
+    tsReferenceNode: ts.TypeReferenceNode;
+    parsedProperty: ParsedProperty;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }) {
+    const {
+      tsReferenceNode,
+      parsedProperty,
+      debugName = tsReferenceNode.getFullText(),
+      typeArguments,
+    } = params;
+
     const tsType = this.typeChecker.getTypeAtLocation(tsReferenceNode);
 
     const { declaration } = tsType as unknown as { declaration?: ts.Node };

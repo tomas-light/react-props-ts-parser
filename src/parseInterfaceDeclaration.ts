@@ -1,17 +1,9 @@
 import ts from 'typescript';
 import { ParsedObject, ParsedProperty } from './ParsedProperty';
+import { ITypeParser } from './ITypeParser';
 
 export function parseInterfaceDeclaration(
-  this: {
-    parsePropertySignatureNode(params: {
-      debugName?: string;
-      tsNode: ts.Node;
-      typeArguments?: ts.NodeArray<ts.TypeNode>;
-    }): {
-      propertyName: string | undefined;
-      parsedProperty: ParsedProperty | undefined;
-    };
-  },
+  this: Pick<ITypeParser, 'parsePropertySignatureNode'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;

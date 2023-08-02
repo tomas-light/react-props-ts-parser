@@ -1,14 +1,9 @@
 import ts from 'typescript';
-import { parseArrayType } from './parseArrayType';
 import { ParsedProperty } from './ParsedProperty';
-import { parseImportedType } from './parseImportedType';
-import { parseInterfaceDeclaration } from './parseInterfaceDeclaration';
-import { parseLiteralType } from './parseLiteralType';
-import { parsePrimitiveType } from './parsePrimitiveType';
-import { parseTypeAlias } from './parseTypeAlias';
-import { parseUnionType } from './parseUnionType';
+import { parseChain } from './parseChain';
+import { ITypeParser } from './ITypeParser';
 
-export class TypeParser {
+export class TypeParser implements ITypeParser {
   constructor(
     public readonly typeChecker: ts.TypeChecker,
     public readonly sourceFile: ts.SourceFile,
@@ -17,35 +12,52 @@ export class TypeParser {
     } = {},
   ) {}
 
-  parse(
-    name: string,
-    tsNode: ts.Node,
-    typeArguments?: ts.NodeArray<ts.TypeNode>,
-  ) {
-    tsNode.forEachChild((childNode) => {
-      let propertyName: string | undefined;
-      let parsedProperty: ParsedProperty | undefined;
+  parse(params: {
+    debugName?: string;
+    tsNode: ts.Node;
+    typeArguments?: ts.NodeArray<ts.TypeNode>;
+  }) {
+    const { tsNode, debugName = tsNode.getFullText(), typeArguments } = params;
+    const intersectionParsedProperty = {} as ParsedProperty;
 
-      if (ts.isPropertySignature(childNode)) {
-        ({ propertyName, parsedProperty } = this.parsePropertySignatureNode({
-          debugName: name,
-          tsNode: childNode,
-          typeArguments,
-        }));
-      } else if (ts.isTypeLiteralNode(childNode)) {
-        this.parse(childNode.getFullText(), childNode);
-      } else {
-        parsedProperty = this.parseType({
-          debugName: childNode.getFullText(),
-          tsNode: childNode,
-          typeArguments,
+    parseChain
+      .call(this, {
+        tsNode,
+        parsedProperty: intersectionParsedProperty,
+      })
+      .intersectionType()
+      .fallback(() => {
+        tsNode.forEachChild((childNode) => {
+          let propertyName: string | undefined;
+          let parsedProperty: ParsedProperty | undefined;
+
+          if (ts.isPropertySignature(childNode)) {
+            ({ propertyName, parsedProperty } = this.parsePropertySignatureNode(
+              {
+                debugName,
+                tsNode: childNode,
+                typeArguments,
+              },
+            ));
+          } else if (ts.isTypeLiteralNode(childNode)) {
+            this.parse({ tsNode: childNode });
+          } else {
+            parsedProperty = this.parseType({
+              debugName: childNode.getFullText(),
+              tsNode: childNode,
+              typeArguments,
+            });
+          }
+
+          if (propertyName && parsedProperty) {
+            this.properties[propertyName] = parsedProperty;
+          }
         });
-      }
+      });
 
-      if (propertyName && parsedProperty) {
-        this.properties[propertyName] = parsedProperty;
-      }
-    });
+    if (intersectionParsedProperty.type === 'intersection-type') {
+      return intersectionParsedProperty;
+    }
 
     return this.properties;
   }
@@ -90,9 +102,6 @@ export class TypeParser {
         comment: firstJsDocNode.comment,
         fullText: firstJsDocNode.getFullText(),
       };
-      // parsedProperty.jsDoc = nodeWithJsDoc.jsDoc
-      //   .map((node) => node.getFullText())
-      //   .join('\n');
     }
 
     return {
@@ -115,452 +124,36 @@ export class TypeParser {
       typeArguments,
     } = params;
 
-    if (parsePrimitiveType({ debugName, tsNode, parsedProperty })) {
-      //
-    } else if (
-      parseLiteralType.call(this, { debugName, tsNode, parsedProperty })
-    ) {
-      //
-    } else if (
-      parseUnionType.call(this, { debugName, tsNode, parsedProperty })
-    ) {
-      //
-    } else if (parseArrayType.call(this, { tsNode, parsedProperty })) {
-      //
-    } else if (
-      this.handleReferenceType({
+    parseChain
+      .call(this, {
         debugName,
         tsNode,
         parsedProperty,
         typeArguments,
       })
-    ) {
-      //
-    } else if (
-      this.handleQuestionToken({ debugName, tsNode, parsedProperty })
-    ) {
-      //
-    } else if (
-      parseTypeAlias.call(this, {
-        tsNode,
-        parsedProperty,
-      })
-    ) {
-      //
-    } else if (
-      parseInterfaceDeclaration.call(this, {
-        tsNode,
-        parsedProperty,
-      })
-    ) {
-      //
-    } else {
-      parsedProperty.type = 'not-parsed';
-      parsedProperty.value = tsNode.getFullText().trim();
-    }
+      .questionToken()
+
+      .primitiveType()
+      .literalType()
+      .intersectionType()
+      .unionType()
+      .arrayType()
+
+      .importedType()
+      .localDefinedType()
+      .mappedType()
+
+      .genericPropertyWithArgumentInReferencedType()
+      .genericProperty()
+
+      .typeAlias()
+      .interfaceDeclaration()
+
+      .fallback(() => {
+        parsedProperty.type = 'not-parsed';
+        parsedProperty.value = tsNode.getFullText().trim();
+      });
 
     return parsedProperty;
-  }
-
-  private handleQuestionToken(params: {
-    debugName?: string;
-    tsNode: ts.Node;
-    parsedProperty: ParsedProperty;
-  }): boolean {
-    const { tsNode, parsedProperty, debugName = tsNode.getFullText() } = params;
-
-    if (ts.isQuestionToken(tsNode)) {
-      parsedProperty.optional = true;
-      return true;
-    }
-
-    return false;
-  }
-
-  // todo: WIP
-  private handleReferenceType(params: {
-    debugName?: string;
-    tsNode: ts.Node;
-    parsedProperty: ParsedProperty;
-    typeArguments?: ts.NodeArray<ts.TypeNode>;
-  }) {
-    const {
-      tsNode,
-      parsedProperty,
-      debugName = tsNode.getFullText(),
-      typeArguments,
-    } = params;
-
-    if (!ts.isTypeReferenceNode(tsNode)) {
-      return false;
-    }
-
-    if (parseImportedType.call(this, { parsedProperty, tsNode })) {
-      return true;
-    } else if (
-      this.handleLocalDefinedType({
-        parsedProperty,
-        tsNode,
-        typeArguments,
-      })
-    ) {
-      return true;
-    } else if (
-      this.handleMappedType({
-        parsedProperty,
-        tsReferenceNode: tsNode,
-        typeArguments,
-      })
-    ) {
-      return true;
-    } else if (
-      this.handleGenericPropertyWithArgumentInReferencedType({
-        parsedProperty,
-        tsNode,
-        typeArguments: typeArguments ?? tsNode.typeArguments,
-      })
-    ) {
-      return true;
-    } else if (
-      this.handleGenericProperty({
-        parsedProperty,
-        tsReferenceNode: tsNode,
-      })
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private handleLocalDefinedType(params: {
-    debugName?: string;
-    tsNode: ts.Node;
-    parsedProperty: ParsedProperty;
-    typeArguments?: ts.NodeArray<ts.TypeNode>;
-  }) {
-    const {
-      tsNode,
-      parsedProperty,
-      debugName = tsNode.getFullText(),
-      typeArguments,
-    } = params;
-
-    let identifierSymbol: ts.Symbol | undefined;
-    for (const nodeChild of tsNode.getChildren()) {
-      if (ts.isIdentifier(nodeChild)) {
-        identifierSymbol = this.typeChecker.getSymbolAtLocation(nodeChild);
-        break;
-      }
-    }
-
-    const symbolDeclarations = identifierSymbol?.getDeclarations();
-    if (!symbolDeclarations?.length) {
-      return false;
-    }
-
-    const [declaration] = symbolDeclarations;
-
-    if (
-      symbolDeclarations.length === 1 &&
-      (ts.isTypeAliasDeclaration(declaration) ||
-        ts.isInterfaceDeclaration(declaration))
-    ) {
-      if (
-        typeArguments?.length ||
-        (tsNode as { typeArguments?: unknown[] }).typeArguments?.length
-      ) {
-        return false;
-      }
-
-      const tsType = this.typeChecker.getTypeAtLocation(tsNode);
-      if (
-        this.handleGenericPropertyAsConstraint({
-          debugName,
-          parsedProperty,
-          tsType,
-        })
-      ) {
-        return true;
-      }
-
-      this.parseType({
-        debugName: declaration.getFullText(),
-        tsNode: declaration,
-        parsedProperty,
-      });
-      return true;
-    }
-
-    return false;
-  }
-
-  private getTypeProperties(type: ts.Type) {
-    const properties = type.getProperties();
-    const apparentProperties = type.getApparentProperties();
-    const joinedProperties = properties.concat(apparentProperties);
-    return joinedProperties.filter(
-      (sym, index) => joinedProperties.indexOf(sym) === index,
-    );
-  }
-
-  private handleGenericPropertyAsConstraint(params: {
-    debugName?: string;
-    parsedProperty: ParsedProperty;
-    tsType: ts.Type;
-  }) {
-    const { parsedProperty, debugName, tsType } = params;
-
-    const genericTypeConstraint = tsType.getConstraint() as ts.Type & {
-      intrinsicName?: string;
-    };
-    if (genericTypeConstraint) {
-      const genericDefault = tsType.getDefault() as ts.Type & {
-        intrinsicName?: string;
-      };
-
-      if (genericDefault?.intrinsicName) {
-        parsedProperty.type = 'generic-constraint';
-        parsedProperty.value = genericDefault.intrinsicName;
-        return true;
-      }
-
-      if (genericTypeConstraint.intrinsicName) {
-        parsedProperty.type = 'generic-constraint';
-        parsedProperty.value = genericTypeConstraint.intrinsicName;
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * @example
-   * type MyGeneric<T> = {
-   *   myProp: T; // <-- here we go (param 'type' === MyGeneric)
-   * };
-   *
-   * type TypeToParse = {
-   *   someProp: MyGeneric<string>;
-   * };
-   * */
-  private handleGenericPropertyWithArgumentInReferencedType(params: {
-    debugName?: string;
-    tsNode: ts.Node;
-    parsedProperty: ParsedProperty;
-    typeArguments?: ts.NodeArray<ts.TypeNode>;
-  }) {
-    const {
-      tsNode,
-      parsedProperty,
-      debugName = tsNode.getFullText(),
-      typeArguments,
-    } = params;
-
-    const tsType = this.typeChecker.getTypeAtLocation(tsNode);
-    if (this.handleGenericPropertyAsConstraint({ parsedProperty, tsType })) {
-      return true;
-    }
-
-    const symbol = tsType.symbol ?? tsType.aliasSymbol;
-    if (!symbol) {
-      return false;
-    }
-
-    const declarations = symbol.getDeclarations();
-    if (!declarations?.length || declarations.length > 1) {
-      // can be more than one? what should we do?
-      return false;
-    }
-
-    const [declaration] = declarations;
-    if (!ts.isTypeParameterDeclaration(declaration) || !typeArguments) {
-      // what's here?
-      return false;
-    }
-
-    if (
-      !ts.isInterfaceDeclaration(declaration.parent) &&
-      !ts.isTypeAliasDeclaration(declaration.parent) &&
-      !ts.isJSDocTemplateTag(declaration.parent)
-    ) {
-      // has no typeParameters field
-      return false;
-    }
-
-    const genericParameterPosition =
-      declaration.parent.typeParameters?.findIndex(
-        (parameter) => parameter.name === declaration.name,
-      );
-    if (genericParameterPosition == null) {
-      // wrong type
-      return false;
-    }
-
-    const argument = typeArguments.at(genericParameterPosition);
-    if (argument) {
-      this.parseType({
-        debugName: declaration.getFullText(),
-        tsNode: argument,
-        parsedProperty,
-        typeArguments,
-      });
-
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * @example
-   * type MyGeneric<T> = {
-   *   myProp: T;
-   * };
-   *
-   * type TypeToParse = {
-   *   someProp: MyGeneric<string>; // <-- here we go (param 'type' === MyGeneric)
-   * };
-   * */
-  private handleGenericProperty(params: {
-    debugName?: string;
-    tsReferenceNode: ts.TypeReferenceNode;
-    parsedProperty: ParsedProperty;
-  }) {
-    const {
-      tsReferenceNode,
-      parsedProperty,
-      debugName = tsReferenceNode.getFullText(),
-    } = params;
-
-    const tsType = this.typeChecker.getTypeAtLocation(tsReferenceNode);
-    const properties = this.getTypeProperties(tsType);
-    if (!properties.length) {
-      return false;
-    }
-
-    parsedProperty.type = 'object';
-    parsedProperty.value = {};
-
-    for (
-      let propertyIndex = 0;
-      propertyIndex < properties.length;
-      propertyIndex++
-    ) {
-      const propertySymbol = properties[propertyIndex];
-      const passedGenericType = tsReferenceNode.typeArguments?.[propertyIndex];
-
-      if (propertySymbol.valueDeclaration) {
-        let propertyName: string | undefined;
-        let nestedProperty: ParsedProperty | undefined;
-
-        if (passedGenericType) {
-          propertySymbol.valueDeclaration.forEachChild((grandChildNode) => {
-            if (ts.isIdentifier(grandChildNode)) {
-              propertyName = grandChildNode.text;
-              return;
-            }
-
-            nestedProperty = this.parseType({
-              debugName: passedGenericType.getFullText(),
-              tsNode: passedGenericType,
-            });
-          });
-        } else {
-          ({ propertyName, parsedProperty: nestedProperty } =
-            this.parsePropertySignatureNode({
-              tsNode: propertySymbol.valueDeclaration,
-              typeArguments: tsReferenceNode.typeArguments,
-            }));
-        }
-
-        if (propertyName && nestedProperty) {
-          parsedProperty.value[propertyName as keyof ParsedProperty] =
-            nestedProperty as never;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * @example
-   * type Props = {
-   *  classes: Record<string, string>; <---- node
-   * }
-   * type Record<K extends keyof any, T> = { <---- type
-   *   [P in K]: T; <---- declaration/mappedTypeNode
-   * };
-   * */
-  private handleMappedType(params: {
-    debugName?: string;
-    tsReferenceNode: ts.TypeReferenceNode;
-    parsedProperty: ParsedProperty;
-    typeArguments?: ts.NodeArray<ts.TypeNode>;
-  }) {
-    const {
-      tsReferenceNode,
-      parsedProperty,
-      debugName = tsReferenceNode.getFullText(),
-      typeArguments,
-    } = params;
-
-    const tsType = this.typeChecker.getTypeAtLocation(tsReferenceNode);
-
-    const { declaration } = tsType as unknown as { declaration?: ts.Node };
-    if (!declaration || !ts.isMappedTypeNode(declaration)) {
-      return false;
-    }
-
-    parsedProperty.type = 'not-parsed';
-    parsedProperty.value = tsReferenceNode.getFullText().trim();
-
-    // const names: string[] = [];
-    //
-    // // mappedTypeNode.typeParameter.symbol === type.typeParameter.symbol
-    //
-    // const mappedTypeNode = declaration;
-    // const mappedTypeNodeTypeParameter = mappedTypeNode.typeParameter; // "P" in "P in K"
-    // const passedTypeArguments = typeArguments || tsReferenceNode.typeArguments;
-    // // const typeAliasTypeParameters = ;
-    //
-    // // const index = typeAliasTypeParameters.findIndex(declaredParameter => declaredParameter.);
-    // const index = -1;
-    // const argument = passedTypeArguments?.at(index);
-    //
-    // if (argument) {
-    //   const text = argument.getText();
-    //   names.push(text);
-    // }
-    //
-    // mappedTypeNode.forEachChild((mappedNode) => {
-    //   const parameterOrValue = mappedNode;
-    //
-    //   // if (ts.isTypeParameterDeclaration(parameterOrValue)) {
-    //   //   const passedTypeArguments = (typeArguments || node.typeArguments);
-    //   //   // const typeAliasTypeParameters = ;
-    //   //
-    //   //   // const index = typeAliasTypeParameters.findIndex(declaredParameter => declaredParameter.);
-    //   //   const index = -1;
-    //   //   const argument = passedTypeArguments?.at(index);
-    //   //
-    //   //   if (argument) {
-    //   //     const text = argument.getText();
-    //   //     names.push(text);
-    //   //   }
-    //   //   return;
-    //   // }
-    //
-    //   if (ts.isTypeReferenceNode(parameterOrValue)) {
-    //     const a = 1;
-    //   }
-    // });
-    //
-    // // names.forEach((name) => {
-    // //   parsedProperty.value[name] = valueDescriptor;
-    // // });
-    return true;
   }
 }

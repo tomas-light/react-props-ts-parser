@@ -1,11 +1,12 @@
 import path from 'path';
-import { ParsedProperty } from '../ParsedProperty';
+import { ObjectParsedProperties, ParsedProperty } from '../ParsedProperty';
 import { parsePropsInFile } from '../parsePropsInFile';
 import { compilerOptions } from './compilerOptions';
 
 describe('[generic types]', () => {
   const componentPath = path.join(__dirname, 'GenericProps.tsx');
-  const { parsed } = parsePropsInFile(componentPath, compilerOptions);
+  const result = parsePropsInFile(componentPath, compilerOptions);
+  const parsed = result.parsed as ObjectParsedProperties;
 
   test('props_set', () => {
     expect(parsed?.['props_set']).toEqual({

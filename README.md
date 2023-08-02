@@ -25,7 +25,6 @@ type SomeOtherProps<Id> = {
 type Variant = 'success' | 'info' | 'warning' | 'error';
 
 type Props<Id extends string> =
-// mapped types not supported yet
   Pick<SomeProps, 'backgroundColor'> & {
   id: Id;
   className?: string;
@@ -53,117 +52,131 @@ type Props<Id extends string> =
 to JSON:
 ```json
 {
-  "id": {
-    "type": "generic-constraint",
-    "value": "string"
-  },
-  "className": {
-    "optional": true,
-    "type": "string"
-  },
-  "open": {
-    "type": "boolean",
-    "jsDoc": {
-      "comment": "my property description",
-      "fullText": "/**\n     * my property description\n     * @example\n     * <TestComponent open={true} />\n     */"
-    }
-  },
-  "onClick": {
-    "type": "function"
-  },
-  "size": {
-    "optional": true,
-    "type": "union-type",
-    "values": [
+  "type": "intersection-type",
+  "value": {
+    "inherited": [
       {
-        "type": "string-literal",
-        "value": "16"
-      },
-      {
-        "type": "string-literal",
-        "value": "24"
-      },
-      {
-        "type": "number-literal",
-        "value": 36
+        "type": "not-parsed",
+        "value": "Pick<SomeProps, 'backgroundColor'>"
       }
-    ]
-  },
-  "count": {
-    "type": "number"
-  },
-  "options": {
-    "type": "array",
-    "values": [
-      {
-        "type": "object",
-        "value": {
-          "label": {
-            "type": "union-type",
-            "values": [
-              {
-                "type": "string-literal",
-                "value": "name"
-              },
-              {
-                "type": "string-literal",
-                "value": "title"
-              }
-            ]
-          },
-          "value": {
-            "type": "number"
+    ],
+    "self": {
+      "type": "object",
+      "value": {
+        "id": {
+          "type": "generic-constraint",
+          "value": "string"
+        },
+        "className": {
+          "optional": true,
+          "type": "string"
+        },
+        "open": {
+          "type": "boolean",
+          "jsDoc": {
+            "comment": "my property description",
+            "fullText": "/**\n   * my property description\n   * @example\n   * <TestComponent open={true} />\n   */"
           }
+        },
+        "onClick": {
+          "type": "function"
+        },
+        "size": {
+          "optional": true,
+          "type": "union-type",
+          "values": [
+            {
+              "type": "string-literal",
+              "value": "16"
+            },
+            {
+              "type": "string-literal",
+              "value": "24"
+            },
+            {
+              "type": "number-literal",
+              "value": 36
+            }
+          ]
+        },
+        "count": {
+          "type": "number"
+        },
+        "options": {
+          "type": "array",
+          "values": [
+            {
+              "type": "object",
+              "value": {
+                "label": {
+                  "type": "union-type",
+                  "values": [
+                    {
+                      "type": "string-literal",
+                      "value": "name"
+                    },
+                    {
+                      "type": "string-literal",
+                      "value": "title"
+                    }
+                  ]
+                },
+                "value": {
+                  "type": "number"
+                }
+              }
+            }
+          ]
+        },
+        "classes": {
+          "type": "not-parsed",
+          "value": "Record<string, string>"
+        },
+        "children": {
+          "type": "imported-type",
+          "value": "ReactNode"
+        },
+        "someChildren": {
+          "type": "array",
+          "values": [
+            {
+              "type": "imported-type",
+              "value": "ReactElement<SomeOtherProps<Id>>"
+            }
+          ]
+        },
+        "style": {
+          "optional": true,
+          "type": "imported-type",
+          "value": "CSSProperties"
+        },
+        "variant": {
+          "type": "union-type",
+          "values": [
+            {
+              "type": "string-literal",
+              "value": "success"
+            },
+            {
+              "type": "string-literal",
+              "value": "info"
+            },
+            {
+              "type": "string-literal",
+              "value": "warning"
+            },
+            {
+              "type": "string-literal",
+              "value": "error"
+            }
+          ]
+        },
+        "date": {
+          "type": "imported-type",
+          "value": "Dayjs"
         }
       }
-    ]
-  },
-  "classes": {
-    "type": "not-parsed",
-    "value": "Record<string, string>"
-  },
-  "children": {
-    "type": "imported-type",
-    "value": "ReactNode"
-  },
-  "someChildren": {
-    "type": "array",
-    "values": [
-      {
-        "type": "imported-type",
-        "value": "ReactElement<SomeOtherProps<Id>>"
-      }
-    ]
-  },
-  "style": {
-    "optional": true,
-    "type": "imported-type",
-    "value": "CSSProperties"
-  },
-  "variant": {
-    "type": "union-type",
-    "values": [
-      {
-        "type": "string-literal",
-        "value": "success"
-      },
-      {
-        "type": "string-literal",
-        "value": "info"
-      },
-      {
-        "type": "string-literal",
-        "value": "warning"
-      },
-      {
-        "type": "string-literal",
-        "value": "error"
-      }
-    ]
-  },
-  "date": {
-    "type": "imported-type",
-    "value": "Dayjs"
+    }
   }
 }
 ```

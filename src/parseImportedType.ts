@@ -2,16 +2,10 @@ import ts from 'typescript';
 import { findImports } from './findImports';
 import { getTypeReferenceIdentifier } from './getTypeReferenceIdentifier';
 import { ParsedProperty } from './ParsedProperty';
+import { ITypeParser } from './ITypeParser';
 
 export function parseImportedType(
-  this: {
-    sourceFile: ts.SourceFile;
-    typeChecker: ts.TypeChecker;
-    parseType(params: {
-      tsNode: ts.Node;
-      parsedProperty?: ParsedProperty;
-    }): ParsedProperty;
-  },
+  this: Pick<ITypeParser, 'typeChecker' | 'parseType' | 'sourceFile'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;

@@ -1,10 +1,12 @@
 import path from 'path';
 import { parsePropsInFile } from '../parsePropsInFile';
+import { ObjectParsedProperties } from '../ParsedProperty';
 import { compilerOptions } from './compilerOptions';
 
 describe('[primitives]', () => {
   const componentPath = path.join(__dirname, 'SimpleProps.tsx');
-  const { parsed } = parsePropsInFile(componentPath, compilerOptions);
+  const result = parsePropsInFile(componentPath, compilerOptions);
+  const parsed = result.parsed as ObjectParsedProperties;
 
   test('props_string', () => {
     expect(parsed?.['props_string']).toEqual({

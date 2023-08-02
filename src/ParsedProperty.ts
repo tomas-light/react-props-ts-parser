@@ -47,14 +47,24 @@ export interface ParsedBooleanLiteral
 export interface ParsedUnionType
   extends ParsedPropertyDescriptor<'union-type', never, ParsedProperty[]> {}
 
+export interface ParsedIntersectionType
+  extends ParsedPropertyDescriptor<
+    'intersection-type',
+    {
+      inherited: ParsedProperty[];
+      self: ParsedObject;
+    }
+  > {}
+
 export interface ParsedArray
   extends ParsedPropertyDescriptor<'array', never, ParsedProperty[]> {}
 
+export type ObjectParsedProperties = {
+  [propertyName: string]: ParsedProperty;
+};
+
 export interface ParsedObject
-  extends ParsedPropertyDescriptor<
-    'object',
-    { [propertyName: string]: ParsedProperty }
-  > {}
+  extends ParsedPropertyDescriptor<'object', ObjectParsedProperties> {}
 
 export interface ParsedImportedReactType
   extends ParsedPropertyDescriptor<'imported-from-react', string> {}
@@ -84,6 +94,7 @@ export type ParsedProperty =
   | ParsedBigIntLiteral
   | ParsedBooleanLiteral
   | ParsedUnionType
+  | ParsedIntersectionType
   | ParsedArray
   | ParsedObject
   | ParsedImportedReactType

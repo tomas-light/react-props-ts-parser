@@ -7,18 +7,10 @@ import {
   ParsedProperty,
   ParsedStringLiteral,
 } from './ParsedProperty';
+import { ITypeParser } from './ITypeParser';
 
 export function parseLiteralType(
-  this: {
-    parsePropertySignatureNode(params: {
-      debugName?: string;
-      tsNode: ts.Node;
-      typeArguments?: ts.NodeArray<ts.TypeNode>;
-    }): {
-      propertyName: string | undefined;
-      parsedProperty: ParsedProperty | undefined;
-    };
-  },
+  this: Pick<ITypeParser, 'parsePropertySignatureNode'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;
@@ -34,16 +26,7 @@ export function parseLiteralType(
   return handleLiterals.call(this, tsNode);
 
   function handleLiterals(
-    this: {
-      parsePropertySignatureNode(params: {
-        debugName?: string;
-        tsNode: ts.Node;
-        typeArguments?: ts.NodeArray<ts.TypeNode>;
-      }): {
-        propertyName: string | undefined;
-        parsedProperty: ParsedProperty | undefined;
-      };
-    },
+    this: Pick<ITypeParser, 'parsePropertySignatureNode'>,
     tsNode: ts.Node,
   ) {
     if (ts.isNumericLiteral(tsNode)) {

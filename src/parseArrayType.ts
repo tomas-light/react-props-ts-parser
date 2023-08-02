@@ -1,12 +1,10 @@
 import ts from 'typescript';
 import { getTypeReferenceIdentifier } from './getTypeReferenceIdentifier';
 import { ParsedArray, ParsedProperty } from './ParsedProperty';
+import { ITypeParser } from './ITypeParser';
 
 export function parseArrayType(
-  this: {
-    typeChecker: ts.TypeChecker;
-    parseType: (params: { tsNode: ts.Node }) => ParsedProperty;
-  },
+  this: Pick<ITypeParser, 'typeChecker' | 'parseType'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;

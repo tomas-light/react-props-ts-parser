@@ -1,10 +1,9 @@
 import ts from 'typescript';
 import { ParsedProperty, ParsedUnionType } from './ParsedProperty';
+import { ITypeParser } from './ITypeParser';
 
 export function parseUnionType(
-  this: {
-    parseType: (params: { tsNode: ts.Node }) => ParsedProperty;
-  },
+  this: Pick<ITypeParser, 'parseType'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;

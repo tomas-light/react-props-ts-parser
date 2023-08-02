@@ -63,11 +63,14 @@ export function parsePropsInFile(
   const [propsNode] = propsNodes;
 
   const typeParser = new TypeParser(typeChecker, sourceFile);
-  const parsedProperties = typeParser.parse('Props', propsNode);
+  const parsed = typeParser.parse({
+    debugName: 'Props',
+    tsNode: propsNode,
+  });
 
   const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
   return {
     source: printer.printNode(ts.EmitHint.Unspecified, propsNode, sourceFile),
-    parsed: parsedProperties,
+    parsed: parsed,
   };
 }

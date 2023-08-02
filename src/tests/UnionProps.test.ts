@@ -1,11 +1,12 @@
 import path from 'path';
-import { ParsedProperty } from '../ParsedProperty';
+import { ObjectParsedProperties, ParsedProperty } from '../ParsedProperty';
 import { parsePropsInFile } from '../parsePropsInFile';
 import { compilerOptions } from './compilerOptions';
 
 describe('[union types]', () => {
   const componentPath = path.join(__dirname, 'UnionProps.tsx');
-  const { parsed } = parsePropsInFile(componentPath, compilerOptions);
+  const result = parsePropsInFile(componentPath, compilerOptions);
+  const parsed = result.parsed as ObjectParsedProperties;
 
   test('props_string', () => {
     expect(parsed?.['props_string']).toEqual({

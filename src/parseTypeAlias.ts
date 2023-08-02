@@ -1,14 +1,9 @@
 import ts from 'typescript';
 import { ParsedProperty } from './ParsedProperty';
+import { ITypeParser } from './ITypeParser';
 
 export function parseTypeAlias(
-  this: {
-    parseType: (params: {
-      debugName?: string;
-      tsNode: ts.Node;
-      parsedProperty: ParsedProperty;
-    }) => ParsedProperty;
-  },
+  this: Pick<ITypeParser, 'parseType'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;

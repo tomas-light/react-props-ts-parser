@@ -140,6 +140,7 @@ export class TypeParser implements ITypeParser {
       .arrayType()
 
       .importedType()
+      .inBuiltType()
       .localDefinedType()
       .mappedType()
 

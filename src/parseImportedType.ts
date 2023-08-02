@@ -69,12 +69,5 @@ export function parseImportedType(
     return true;
   }
 
-  const typeName = identifierSymbol?.getName();
-  if (typeName && ['Set', 'Map'].includes(typeName)) {
-    parsedProperty.type = 'not-parsed';
-    parsedProperty.value = tsNode.getFullText().trim();
-    return true;
-  }
-
   return false;
 }

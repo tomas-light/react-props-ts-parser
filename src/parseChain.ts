@@ -14,6 +14,7 @@ import { parseGenericPropertyWithArgumentInReferencedType } from './parseGeneric
 import { parseGenericProperty } from './parseGenericProperty';
 import { parseIntersectionType } from './parseIntersectionType';
 import { ITypeParser } from './ITypeParser';
+import { parseInBuiltType } from './parseInBuiltType';
 
 export function parseChain(
   this: ITypeParser,
@@ -58,6 +59,12 @@ export function parseChain(
     importedType: () => {
       if (!handled) {
         handled = parseImportedType.call(this, params);
+      }
+      return parser;
+    },
+    inBuiltType: () => {
+      if (!handled) {
+        handled = parseInBuiltType.call(this, params);
       }
       return parser;
     },

@@ -105,17 +105,21 @@ export function parseInBuiltType(
 function getLiteralValues(typeNode: ts.TypeNode): (string | number)[] {
   const literalNodes: ts.LiteralTypeNode[] = [];
 
-  typeNode!.forEachChild((node) => {
-    if (ts.isLiteralTypeNode(node)) {
-      literalNodes.push(node);
-    } else if (ts.isUnionTypeNode(node)) {
-      node.forEachChild((unionNode) => {
-        if (ts.isLiteralTypeNode(unionNode)) {
-          literalNodes.push(unionNode);
-        }
-      });
-    }
-  });
+  if (ts.isLiteralTypeNode(typeNode)) {
+    literalNodes.push(typeNode);
+  } else {
+    typeNode!.forEachChild((node) => {
+      if (ts.isLiteralTypeNode(node)) {
+        literalNodes.push(node);
+      } else if (ts.isUnionTypeNode(node)) {
+        node.forEachChild((unionNode) => {
+          if (ts.isLiteralTypeNode(unionNode)) {
+            literalNodes.push(unionNode);
+          }
+        });
+      }
+    });
+  }
 
   return literalNodes
     .map((node) => {

@@ -56,8 +56,8 @@ to JSON:
   "value": {
     "inherited": [
       {
-        "type": "not-parsed",
-        "value": "Pick<SomeProps, 'backgroundColor'>"
+        "type": "object",
+        "value": {}
       }
     ],
     "self": {

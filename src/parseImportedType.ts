@@ -64,6 +64,24 @@ export function parseImportedType(
       }
     }
 
+    if (importedType.nameFromWhereImportIs === 'react') {
+      if (importedType.identifier.escapedText === 'HTMLAttributes') {
+        const tsType = this.typeChecker.getTypeAtLocation(identifier!);
+        const typeDeclarations = (
+          tsType.symbol ?? tsType.aliasSymbol
+        )?.getDeclarations();
+
+        if (typeDeclarations?.length === 1) {
+          this.parseType({
+            tsNode: typeDeclarations[0],
+            parsedProperty,
+          });
+
+          return true;
+        }
+      }
+    }
+
     parsedProperty.type = 'imported-type';
     parsedProperty.value = tsNode.getFullText().trim();
     return true;

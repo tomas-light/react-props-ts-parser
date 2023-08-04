@@ -1,12 +1,12 @@
 import ts from 'typescript';
 
-export function findImports(this: { sourceFile: ts.SourceFile }) {
+export function findImports(sourceFile: ts.SourceFile) {
   const imports: {
     identifier: ts.Identifier;
     nameFromWhereImportIs: string;
   }[] = [];
 
-  ts.forEachChild(this.sourceFile, (tsNode) => {
+  ts.forEachChild(sourceFile, (tsNode) => {
     if (!ts.isImportDeclaration(tsNode)) {
       return;
     }

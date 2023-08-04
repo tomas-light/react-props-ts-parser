@@ -5,7 +5,7 @@ import { ParsedProperty } from './ParsedProperty';
 import { ITypeParser } from './ITypeParser';
 
 export function parseImportedType(
-  this: Pick<ITypeParser, 'typeChecker' | 'parseType' | 'sourceFile'>,
+  this: Pick<ITypeParser, 'typeChecker' | 'parseType'>,
   params: {
     debugName?: string;
     tsNode: ts.Node;
@@ -38,7 +38,7 @@ export function parseImportedType(
   );
 
   if (isImport) {
-    const imports = findImports.call(this);
+    const imports = findImports(tsNode.getSourceFile());
 
     const importedType = imports.find((_import) => {
       const _symbol = this.typeChecker.getSymbolAtLocation(_import.identifier);

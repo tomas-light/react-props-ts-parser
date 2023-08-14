@@ -6,7 +6,6 @@ import { ITypeParser } from './ITypeParser';
 export class TypeParser implements ITypeParser {
   constructor(
     public readonly typeChecker: ts.TypeChecker,
-    public readonly sourceFile: ts.SourceFile,
     private readonly properties: {
       [propertyName: string]: ParsedProperty;
     } = {},

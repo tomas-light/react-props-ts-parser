@@ -15,8 +15,11 @@ export function parsePropsInFile(
   const sourceFile = program.getSourceFile(componentFilePath);
 
   if (!sourceFile) {
-    console.error(`source file is not found on ${componentFilePath}`);
-    return { source: null, parsed: null };
+    return {
+      source: null,
+      parsed: null,
+      reason: `source file is not found on ${componentFilePath}`,
+    };
   }
 
   const propsNodes: ts.Node[] = [];
@@ -51,18 +54,20 @@ export function parsePropsInFile(
   });
 
   if (propsNodes.length === 0) {
-    console.error('props are not found');
-    return { source: null, parsed: null };
+    return { source: null, parsed: null, reason: 'props are not found' };
   }
 
   if (propsNodes.length > 1) {
-    console.error('too many props declarations');
-    return { source: null, parsed: null };
+    return {
+      source: null,
+      parsed: null,
+      reason: 'too many props declarations',
+    };
   }
 
   const [propsNode] = propsNodes;
 
-  const typeParser = new TypeParser(typeChecker, sourceFile);
+  const typeParser = new TypeParser(typeChecker);
   const parsed = typeParser.parse({
     debugName: 'Props',
     tsNode: propsNode,

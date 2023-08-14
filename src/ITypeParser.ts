@@ -7,7 +7,6 @@ import {
 
 export interface ITypeParser {
   typeChecker: ts.TypeChecker;
-  sourceFile: ts.SourceFile;
 
   parse(params: {
     debugName?: string;

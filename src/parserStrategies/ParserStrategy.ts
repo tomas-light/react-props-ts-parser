@@ -1,10 +1,12 @@
 import ts from 'typescript';
 import { ParsedProperty } from '../ParsedProperty';
 
-export interface ParserStrategy {
-  parse(
+export abstract class ParserStrategy {
+  constructor(protected readonly globalParse: ParserStrategy['parse']) {}
+
+  abstract parse(
     tsNode: ts.Node,
-    options?: {
+    options: {
       typeChecker: ts.TypeChecker;
       typeArguments?: ts.NodeArray<ts.TypeNode>;
     },

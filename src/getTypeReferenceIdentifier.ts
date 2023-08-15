@@ -1,14 +1,20 @@
 import ts from 'typescript';
 
 export function getTypeReferenceIdentifier(tsNode: ts.TypeReferenceNode) {
-  let identifier: ts.Identifier | undefined;
-
   for (const nodeChild of tsNode.getChildren()) {
     if (ts.isIdentifier(nodeChild)) {
-      identifier = nodeChild;
-      break;
+      return nodeChild;
     }
   }
+}
 
-  return identifier;
+export function getTypeReferenceIdentifierSymbol(
+  tsNode: ts.TypeReferenceNode,
+  typeChecker: ts.TypeChecker,
+) {
+  const identifier = getTypeReferenceIdentifier(tsNode);
+
+  if (identifier) {
+    return typeChecker.getSymbolAtLocation(identifier);
+  }
 }

@@ -1,13 +1,13 @@
 import path from 'path';
-import { ArrayParser } from './Array.parser';
-import { getPropertyNode } from './getPropertyNode';
+import { getPropertyNode } from '../getPropertyNode';
+import { GenericTypeReferenceParser } from './GenericTypeReference.parser';
 
-describe('[class] Array parser', () => {
-  const filePath = path.join(__dirname, 'Array.props.ts');
+describe('[class] GenericTypeReference parser', () => {
+  const filePath = path.join(__dirname, 'GenericTypeReference.props.ts');
   const _getPropertyNode = (propertyName: string) =>
     getPropertyNode(filePath, propertyName);
 
-  const array = new ArrayParser((tsNode) => [
+  const genericTypeReference = new GenericTypeReferenceParser((tsNode) => [
     { type: 'mocked_string' as 'string' },
   ]);
 
@@ -18,7 +18,7 @@ describe('[class] Array parser', () => {
     ['ReadonlyArray<string>', 'readonlyArrayReferenceNode'],
   ])('%s property is parsed correctly', async (_, propertyName) => {
     const { tsNode, typeChecker } = await _getPropertyNode(propertyName);
-    const result = array.parse(tsNode, { typeChecker });
+    const result = genericTypeReference.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
         type: 'array',

@@ -1,17 +1,38 @@
-export interface ParsedPropertyDescriptor<
-  Type extends string,
-  Value = never,
-  Values = never,
-> {
+export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
+  propertyName?: string | number;
+  optional?: boolean;
+
   type: Type;
+  value?: Value;
+
   jsDoc?: {
     comment: string;
     fullText: string;
   };
-  optional?: boolean;
-  value?: Value;
-  values?: Values;
 }
+
+export type ParsedProperty =
+  | ParsedString
+  | ParsedNumber
+  | ParsedBoolean
+  | ParsedUndefined
+  | ParsedSymbol
+  | ParsedBigint
+  | ParsedNull
+  | ParsedFunction
+  | ParsedAny
+  | ParsedUnknown
+  | ParsedStringLiteral
+  | ParsedNumberLiteral
+  | ParsedBigIntLiteral
+  | ParsedBooleanLiteral
+  | ParsedUnionType
+  | ParsedArray
+  | ParsedObject
+  | ParsedImportedReactType
+  | ParsedImportedType
+  | ParsedGenericConstraint
+  | NotParsedType;
 
 export interface ParsedString extends ParsedPropertyDescriptor<'string'> {}
 
@@ -45,26 +66,13 @@ export interface ParsedBooleanLiteral
   extends ParsedPropertyDescriptor<'boolean-literal', boolean> {}
 
 export interface ParsedUnionType
-  extends ParsedPropertyDescriptor<'union-type', never, ParsedProperty[]> {}
-
-export interface ParsedIntersectionType
-  extends ParsedPropertyDescriptor<
-    'intersection-type',
-    {
-      inherited: ParsedProperty[];
-      self: ParsedObject;
-    }
-  > {}
+  extends ParsedPropertyDescriptor<'union-type', ParsedProperty[]> {}
 
 export interface ParsedArray
-  extends ParsedPropertyDescriptor<'array', never, ParsedProperty[]> {}
-
-export type ObjectParsedProperties = {
-  [propertyName: string]: ParsedProperty;
-};
+  extends ParsedPropertyDescriptor<'array', ParsedProperty[]> {}
 
 export interface ParsedObject
-  extends ParsedPropertyDescriptor<'object', ObjectParsedProperties> {}
+  extends ParsedPropertyDescriptor<'object', ParsedProperty[]> {}
 
 export interface ParsedImportedReactType
   extends ParsedPropertyDescriptor<'imported-from-react', string> {}
@@ -77,27 +85,3 @@ export interface ParsedGenericConstraint
 
 export interface NotParsedType
   extends ParsedPropertyDescriptor<'not-parsed', string> {}
-
-export type ParsedProperty =
-  | ParsedString
-  | ParsedNumber
-  | ParsedBoolean
-  | ParsedUndefined
-  | ParsedSymbol
-  | ParsedBigint
-  | ParsedNull
-  | ParsedFunction
-  | ParsedAny
-  | ParsedUnknown
-  | ParsedStringLiteral
-  | ParsedNumberLiteral
-  | ParsedBigIntLiteral
-  | ParsedBooleanLiteral
-  | ParsedUnionType
-  | ParsedIntersectionType
-  | ParsedArray
-  | ParsedObject
-  | ParsedImportedReactType
-  | ParsedImportedType
-  | ParsedGenericConstraint
-  | NotParsedType;

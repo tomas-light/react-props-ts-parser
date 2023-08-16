@@ -1,14 +1,11 @@
 import ts from 'typescript';
+import { ParseFunction } from '../ParseFunction';
 import { ParserStrategy } from '../ParserStrategy';
-import { parseProperty } from './parseProperty';
 
 export class PrimitiveParser extends ParserStrategy {
-  parse: ParserStrategy['parse'] = (tsNode) => {
+  parsePropertyValue: ParseFunction = (tsNode) => {
     const debugName = tsNode.getFullText();
-    return parseProperty(this.parsePropertyValue, tsNode);
-  };
 
-  private parsePropertyValue: ParserStrategy['parse'] = (tsNode) => {
     switch (tsNode.kind) {
       case ts.SyntaxKind.NumberKeyword:
         return [

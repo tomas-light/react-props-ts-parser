@@ -1,5 +1,5 @@
 import path from 'path';
-import { ParsedProperty } from '../../ParsedProperty';
+import { ParsedProperty } from '../types';
 import { getPropertyNode } from './getPropertyNode';
 import { PrimitiveParser } from './Primitive.parser';
 
@@ -15,6 +15,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_string',
+        optional: false,
         type: 'string',
       },
     ] satisfies ParsedProperty[]);
@@ -25,6 +27,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_number',
+        optional: false,
         type: 'number',
       },
     ] satisfies ParsedProperty[]);
@@ -35,6 +39,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_boolean',
+        optional: false,
         type: 'boolean',
       },
     ] satisfies ParsedProperty[]);
@@ -45,6 +51,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_null',
+        optional: false,
         type: 'null',
       },
     ] satisfies ParsedProperty[]);
@@ -55,6 +63,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_undefined',
+        optional: true,
         type: 'undefined',
       },
     ] satisfies ParsedProperty[]);
@@ -65,6 +75,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_bigint',
+        optional: false,
         type: 'bigint',
       },
     ] satisfies ParsedProperty[]);
@@ -75,6 +87,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_symbol',
+        optional: false,
         type: 'symbol',
       },
     ] satisfies ParsedProperty[]);
@@ -85,6 +99,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_function',
+        optional: false,
         type: 'function',
       },
     ] satisfies ParsedProperty[]);
@@ -95,6 +111,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_any',
+        optional: false,
         type: 'any',
       },
     ] satisfies ParsedProperty[]);
@@ -105,6 +123,8 @@ describe('[class] Primitive parser', () => {
     const result = primitive.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
+        propertyName: 'props_unknown',
+        optional: false,
         type: 'unknown',
       },
     ] satisfies ParsedProperty[]);

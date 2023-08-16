@@ -1,6 +1,6 @@
 import ts from 'typescript';
-import { findImports } from './findImports';
-import { getTypeReferenceIdentifier } from './getTypeReferenceIdentifier';
+import { findImports } from '../findImports';
+import { getTypeReferenceIdentifier } from '../getTypeReferenceIdentifier';
 import { ParsedProperty } from './ParsedProperty';
 import { ITypeParser } from './ITypeParser';
 

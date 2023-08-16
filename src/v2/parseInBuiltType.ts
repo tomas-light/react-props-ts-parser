@@ -1,7 +1,7 @@
 import ts from 'typescript';
+import { getTypeReferenceIdentifier } from '../getTypeReferenceIdentifier';
 import { ITypeParser } from './ITypeParser';
 import { ParsedProperty } from './ParsedProperty';
-import { getTypeReferenceIdentifier } from './getTypeReferenceIdentifier';
 
 export function parseInBuiltType(
   this: Pick<ITypeParser, 'typeChecker' | 'parseType'>,

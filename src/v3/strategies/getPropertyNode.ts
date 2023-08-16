@@ -1,9 +1,13 @@
 import { findPropertyTsNode } from '../../findPropertyTsNode';
 import { findTsNodeInFile } from '../../findTsNodeInFile';
-import { compilerOptions } from '../../tests/compilerOptions';
+import { testCompilerOptions } from '../testCompilerOptions';
 
 export async function getPropertyNode(filePath: string, propertyName: string) {
-  const founded = (await findTsNodeInFile(filePath, 'Props', compilerOptions))!;
+  const founded = (await findTsNodeInFile(
+    filePath,
+    'Props',
+    testCompilerOptions,
+  ))!;
 
   const tsNode = findPropertyTsNode(propertyName, founded.tsNode)!;
   return {

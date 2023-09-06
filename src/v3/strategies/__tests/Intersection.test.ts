@@ -1,10 +1,10 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../findTsNodeInFile';
-import { parse } from '../parse';
-import { testCompilerOptions } from '../testCompilerOptions';
-import { ParsedProperty } from '../types';
+import { findTsNodeInFile } from '../../../findTsNodeInFile';
+import { parse } from '../../parse';
+import { testCompilerOptions } from '../../testCompilerOptions';
+import { ParsedProperty } from '../../types';
+import { flatProperties } from './flatProperties';
 import { Props } from './Intersection.props';
-import { flatProperties } from './testUtils/flatProperties';
 
 describe('[class] Intersection parser', () => {
   const filePath = path.join(__dirname, 'Intersection.props.ts');

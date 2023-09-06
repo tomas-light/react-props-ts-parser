@@ -1,7 +1,7 @@
 import path from 'path';
-import { ParsedProperty } from '../types';
-import { getPropertyNode } from './getPropertyNode';
-import { PrimitiveParser } from './Primitive.parser';
+import { ParsedProperty } from '../../types';
+import { getPropertyNode } from '../getPropertyNode';
+import { PrimitiveParser } from '../Primitive.parser';
 
 describe('[class] Primitive parser', () => {
   const filePath = path.join(__dirname, 'Primitive.props.ts');

@@ -1,9 +1,9 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../findTsNodeInFile';
-import { parse } from '../parse';
-import { testCompilerOptions } from '../testCompilerOptions';
-import { ParsedProperty } from '../types';
-import { flatProperties } from './testUtils/flatProperties';
+import { findTsNodeInFile } from '../../../findTsNodeInFile';
+import { parse } from '../../parse';
+import { testCompilerOptions } from '../../testCompilerOptions';
+import { ParsedProperty } from '../../types';
+import { flatProperties } from './flatProperties';
 
 describe('[class] UnionType parser', () => {
   const filePath = path.join(__dirname, 'UnionType.props.ts');

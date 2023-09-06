@@ -1,23 +1,26 @@
 import path from 'path';
+import { findTsNodeInFile } from '../../../findTsNodeInFile';
+import { parse } from '../../parse';
+import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty } from '../../types';
-import { getPropertyNode } from '../getPropertyNode';
-import { GenericTypeReferenceParser } from './GenericTypeReference.parser';
+import { flatProperties } from './flatProperties';
 
 describe('[class] GenericTypeReference parser', () => {
   const filePath = path.join(__dirname, 'GenericTypeReference.props.ts');
-  const _getPropertyNode = (propertyName: string) =>
-    getPropertyNode(filePath, propertyName);
-
-  const genericTypeReference = new GenericTypeReferenceParser((tsNode) => [
-    { type: 'mocked_string' as 'string' },
-  ]);
 
   test('temp', async () => {
-    const { tsNode, typeChecker } = await _getPropertyNode(
-      'props_id_constraint'
+    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
+      filePath,
+      'Props',
+      testCompilerOptions
+    ))!;
+
+    const result = parse(propsNode, { typeChecker });
+    const properties = flatProperties(result);
+    const targetProperty = properties.find(
+      (parsedProperty) => parsedProperty!.propertyName === 'props_id_constraint'
     );
-    const result = genericTypeReference.parse(tsNode, { typeChecker });
-    expect(result).toEqual([
+    expect(targetProperty).toEqual([
       {
         type: 'generic-constraint',
         value: [

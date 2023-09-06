@@ -1,6 +1,6 @@
 import path from 'path';
-import { parse } from '../parse';
-import { getPropertyNode } from './getPropertyNode';
+import { parse } from '../../parse';
+import { getPropertyNode } from '../getPropertyNode';
 
 describe('[class] Array parser', () => {
   const filePath = path.join(__dirname, 'Array.props.ts');

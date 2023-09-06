@@ -50,7 +50,9 @@ export interface ParsedBigint extends ParsedPropertyDescriptor<'bigint'> {}
 export interface ParsedNull extends ParsedPropertyDescriptor<'null'> {}
 
 export interface ParsedFunction extends ParsedPropertyDescriptor<'function'> {}
+
 export interface ParsedAny extends ParsedPropertyDescriptor<'any'> {}
+
 export interface ParsedUnknown extends ParsedPropertyDescriptor<'unknown'> {}
 
 export interface ParsedStringLiteral
@@ -81,7 +83,7 @@ export interface ParsedImportedType
   extends ParsedPropertyDescriptor<'imported-type', string> {}
 
 export interface ParsedGenericConstraint
-  extends ParsedPropertyDescriptor<'generic-constraint', string> {}
+  extends ParsedPropertyDescriptor<'generic-constraint', ParsedProperty[]> {}
 
 export interface NotParsedType
   extends ParsedPropertyDescriptor<'not-parsed', string> {}

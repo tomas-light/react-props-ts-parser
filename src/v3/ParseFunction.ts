@@ -6,5 +6,5 @@ export type ParseFunction = (
   options: {
     typeChecker: ts.TypeChecker;
     typeArguments?: ts.NodeArray<ts.TypeNode>;
-  },
+  }
 ) => ParsedProperty[] | undefined;

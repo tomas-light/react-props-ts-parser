@@ -21,11 +21,17 @@ export class GenericTypeReferenceParser extends ParserStrategy {
         intrinsicName?: string;
       };
 
+      // todo: wrong code
       if (genericTypeDefault?.intrinsicName) {
         return [
           {
             type: 'generic-constraint',
-            value: genericTypeDefault.intrinsicName,
+            value: [
+              {
+                type: 'string-literal',
+                value: genericTypeDefault.intrinsicName,
+              },
+            ],
           },
         ];
       }
@@ -34,7 +40,12 @@ export class GenericTypeReferenceParser extends ParserStrategy {
         return [
           {
             type: 'generic-constraint',
-            value: genericTypeConstraint.intrinsicName,
+            value: [
+              {
+                type: 'string-literal',
+                value: genericTypeConstraint.intrinsicName,
+              },
+            ],
           },
         ];
       }
@@ -44,7 +55,7 @@ export class GenericTypeReferenceParser extends ParserStrategy {
 
 export function findNodeGenericConstraint(
   tsNode: ts.TypeReferenceNode,
-  typeChecker: ts.TypeChecker,
+  typeChecker: ts.TypeChecker
 ) {
   const tsType = typeChecker.getTypeAtLocation(tsNode);
   const constraint = tsType.getConstraint() as ts.Type & {

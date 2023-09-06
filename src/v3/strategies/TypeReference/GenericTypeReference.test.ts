@@ -1,4 +1,5 @@
 import path from 'path';
+import { ParsedProperty } from '../../types';
 import { getPropertyNode } from '../getPropertyNode';
 import { GenericTypeReferenceParser } from './GenericTypeReference.parser';
 
@@ -11,23 +12,30 @@ describe('[class] GenericTypeReference parser', () => {
     { type: 'mocked_string' as 'string' },
   ]);
 
-  test.each([
-    ['string[]', 'arrayNode'],
-    ['readonly string[]', 'readonlyArrayNode'],
-    ['Array<string>', 'arrayReferenceNode'],
-    ['ReadonlyArray<string>', 'readonlyArrayReferenceNode'],
-  ])('%s property is parsed correctly', async (_, propertyName) => {
-    const { tsNode, typeChecker } = await _getPropertyNode(propertyName);
+  test('temp', async () => {
+    const { tsNode, typeChecker } = await _getPropertyNode(
+      'props_id_constraint'
+    );
     const result = genericTypeReference.parse(tsNode, { typeChecker });
     expect(result).toEqual([
       {
-        type: 'array',
-        values: [
+        type: 'generic-constraint',
+        value: [
           {
-            type: 'mocked_string',
+            type: 'union-type',
+            value: [
+              {
+                type: 'string-literal',
+                value: 'prop_a',
+              },
+              {
+                type: 'string-literal',
+                value: 'prob_b',
+              },
+            ],
           },
         ],
       },
-    ]);
+    ] satisfies ParsedProperty[]);
   });
 });

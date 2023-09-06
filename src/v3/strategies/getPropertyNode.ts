@@ -6,7 +6,7 @@ export async function getPropertyNode(filePath: string, propertyName: string) {
   const founded = (await findTsNodeInFile(
     filePath,
     'Props',
-    testCompilerOptions,
+    testCompilerOptions
   ))!;
 
   const tsNode = findPropertyTsNode(propertyName, founded.tsNode)!;

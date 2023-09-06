@@ -21,7 +21,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const identifierSymbol = getTypeReferenceIdentifierSymbol(
       tsNode,
-      typeChecker,
+      typeChecker
     );
 
     const typeName = identifierSymbol?.getName();

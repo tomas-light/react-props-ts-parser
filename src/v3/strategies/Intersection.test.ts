@@ -76,21 +76,21 @@ describe('[class] Intersection parser', () => {
       const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
         filePath,
         'Props',
-        testCompilerOptions,
+        testCompilerOptions
       ))!;
 
       const result = parse(propsNode, { typeChecker });
       expect(result?.[propertyName as keyof typeof result]).toEqual(
-        expectedValue,
+        expectedValue
       );
-    },
+    }
   );
 
   test('full parsed type is parsed correctly', async () => {
     const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
       filePath,
       'Props',
-      testCompilerOptions,
+      testCompilerOptions
     ))!;
 
     const result = parse(propsNode, { typeChecker });

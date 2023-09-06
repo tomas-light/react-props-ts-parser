@@ -4,6 +4,7 @@ import { parse } from '../parse';
 import { testCompilerOptions } from '../testCompilerOptions';
 import { ParsedProperty } from '../types';
 import { Props } from './Intersection.props';
+import { flatProperties } from './testUtils/flatProperties';
 
 describe('[class] Intersection parser', () => {
   const filePath = path.join(__dirname, 'Intersection.props.ts');
@@ -72,7 +73,7 @@ describe('[class] Intersection parser', () => {
 
   test.each(Object.entries(expected))(
     '%s',
-    async ([propertyName, [, expectedValue]]) => {
+    async (propertyName, [, expectedValue]) => {
       const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
         filePath,
         'Props',
@@ -80,9 +81,11 @@ describe('[class] Intersection parser', () => {
       ))!;
 
       const result = parse(propsNode, { typeChecker });
-      expect(result?.[propertyName as keyof typeof result]).toEqual(
-        expectedValue
+      const properties = flatProperties(result);
+      const targetProperty = properties.find(
+        (parsedProperty) => parsedProperty!.propertyName === propertyName
       );
+      expect(targetProperty).toEqual(expectedValue);
     }
   );
 

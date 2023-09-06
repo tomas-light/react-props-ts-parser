@@ -2,10 +2,12 @@ import { ParseFunction } from './ParseFunction';
 import { ParserStrategy } from './ParserStrategy';
 import { ArrayParser } from './strategies/Array.parser';
 import { IntersectionParser } from './strategies/Intersection.parser';
+import { LiteralParser } from './strategies/Literal.parser';
 import { PrimitiveParser } from './strategies/Primitive.parser';
 import { TypeLiteralParser } from './strategies/TypeLiteral.parser';
 import { TypeAliasParser } from './strategies/TypeReference/TypeAlias.parser';
 import { TypeReferenceParser } from './strategies/TypeReference/TypeReference.parser';
+import { UnionTypeParser } from './strategies/UnionType.parser';
 
 const strategies: (new (globalParse: ParseFunction) => ParserStrategy)[] = [
   //
@@ -14,7 +16,9 @@ const strategies: (new (globalParse: ParseFunction) => ParserStrategy)[] = [
   IntersectionParser,
   TypeReferenceParser,
   PrimitiveParser,
+  LiteralParser,
   ArrayParser,
+  UnionTypeParser,
 ];
 
 export const parse: ParseFunction = (...args) => {

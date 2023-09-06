@@ -1,5 +1,4 @@
 import ts from 'typescript';
-import { getTypeReferenceIdentifierSymbol } from '../../getTypeReferenceIdentifier';
 import { ParseFunction } from '../ParseFunction';
 import { ParserStrategy } from '../ParserStrategy';
 import { ParsedArray } from '../types';

@@ -36,7 +36,9 @@ export function parsePropertySignature(
 
   parsedProperties.forEach((property) => {
     property.propertyName ??= propertyName;
-    property.optional ??= isOptional;
+    if (isOptional) {
+      property.optional = true;
+    }
   });
 
   return parsedProperties;

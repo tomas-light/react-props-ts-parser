@@ -18,7 +18,6 @@ describe('[class] Array parser', () => {
     expect(result).toEqual([
       {
         propertyName,
-        optional: false,
         type: 'array',
         value: [
           {

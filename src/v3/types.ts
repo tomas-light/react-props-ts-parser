@@ -1,3 +1,5 @@
+import ts from 'typescript';
+
 export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   propertyName?: string | number;
   optional?: boolean;
@@ -10,6 +12,11 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
     fullText: string;
   };
 }
+
+export type GenericTypeParameters = Map<
+  ts.Identifier,
+  ParsedProperty[] | 'generic'
+>;
 
 export type ParsedProperty =
   | ParsedString

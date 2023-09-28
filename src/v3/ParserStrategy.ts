@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { ParseFunction } from './ParseFunction';
 import { parsePropertySignature } from './strategies/parsePropertySignature';
+import { GenericTypeParameters } from './types';
 
 export abstract class ParserStrategy {
   constructor(protected readonly globalParse: ParseFunction) {}
@@ -19,4 +20,6 @@ export abstract class ParserStrategy {
   };
 
   abstract parsePropertyValue: ParseFunction;
+
+  protected typeParameters: GenericTypeParameters | undefined;
 }

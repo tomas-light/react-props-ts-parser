@@ -1,8 +1,11 @@
 import ts from 'typescript';
-import { getTypeReferenceIdentifierSymbol } from '../../../getTypeReferenceIdentifier';
+import { defined } from '../../../defined';
+import { findImports } from '../../../findImports';
+import { getTypeReferenceIdentifier } from '../../../getTypeReferenceIdentifier';
+import { getLiteralValues } from '../../../utils/getLiteralValues';
 import { ParseFunction } from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
-import { ParsedProperty } from '../../types';
+import { ParsedObject, ParsedProperty } from '../../types';
 import { ArrayParser } from '../Array.parser';
 import {
   findNodeGenericConstraint,
@@ -19,19 +22,55 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const { typeChecker } = options;
 
-    const identifierSymbol = getTypeReferenceIdentifierSymbol(
-      tsNode,
-      typeChecker
-    );
+    const identifier = getTypeReferenceIdentifier(tsNode);
+
+    let identifierSymbol: ts.Symbol | undefined;
+    if (identifier) {
+      identifierSymbol = typeChecker.getSymbolAtLocation(identifier);
+    }
 
     const typeName = identifierSymbol?.getName();
     if (typeName && ['Array', 'ReadonlyArray'].includes(typeName)) {
-      const arrayParser = new ArrayParser(this.globalParse);
-      const result = arrayParser.parseArray(tsNode, options);
-      if (result) {
-        return result;
+      return this.parseNodeAsArray(tsNode, options);
+    }
+
+    if (typeName && ['Set', 'Map'].includes(typeName)) {
+      return [
+        {
+          type: 'not-parsed',
+          value: debugName.trim(),
+        },
+      ];
+    }
+
+    if (typeName === 'Partial') {
+      return this.parsePartialNode(tsNode, options);
+    }
+
+    if (typeName === 'Pick') {
+      return this.parsePickedNode(tsNode, options);
+    }
+
+    if (typeName === 'Omit') {
+      return this.parseOmittedNode(tsNode, options);
+    }
+
+    const symbolDeclarations = identifierSymbol?.getDeclarations();
+    if (symbolDeclarations?.length) {
+      const isImport = symbolDeclarations.some(
+        (declaration) =>
+          ts.isImportSpecifier(declaration) ||
+          ts.isImportClause(declaration) ||
+          ts.isExternalModuleReference(declaration)
+      );
+      if (isImport) {
+        return this.parseImportedType(
+          tsNode,
+          options,
+          identifier!,
+          identifierSymbol!
+        );
       }
-      return;
     }
 
     const { tsType, constraint: genericTypeConstraint } =
@@ -60,6 +99,119 @@ export class TypeReferenceParser extends ParserStrategy {
       return parsedProperties;
     }
   };
+
+  private parseNodeAsArray(
+    tsNode: ts.TypeReferenceNode,
+    options: Parameters<ParseFunction>[1]
+  ) {
+    const arrayParser = new ArrayParser(this.globalParse);
+    const result = arrayParser.parseArray(tsNode, options);
+    if (result) {
+      return result;
+    }
+    return;
+  }
+
+  private parsePartialNode(
+    tsNode: ts.TypeReferenceNode,
+    options: Parameters<ParseFunction>[1]
+  ) {
+    const [typeNode] = tsNode.typeArguments ?? [];
+    if (!typeNode) {
+      return;
+    }
+
+    const parsedProperties = this.globalParse(typeNode, options);
+
+    parsedProperties?.forEach((parsedProperty) => {
+      if (parsedProperty.type === 'object' && parsedProperty.value) {
+        parsedProperty.value.forEach((partialParsedProperty) => {
+          partialParsedProperty.optional = true;
+        });
+      }
+    });
+
+    return parsedProperties;
+  }
+
+  private parsePickedNode(
+    tsNode: ts.TypeReferenceNode,
+    options: Parameters<ParseFunction>[1]
+  ) {
+    const [typeNode, pickedNameNode] = tsNode.typeArguments ?? [];
+    if (!typeNode || !pickedNameNode) {
+      return;
+    }
+
+    const parsedProperties = this.globalParse(typeNode, options);
+    const picked = new Set(getLiteralValues(pickedNameNode));
+    return pickProperties(parsedProperties, { picked });
+  }
+
+  private parseOmittedNode(
+    tsNode: ts.TypeReferenceNode,
+    options: Parameters<ParseFunction>[1]
+  ) {
+    const [typeNode, omittedNameNode] = tsNode.typeArguments ?? [];
+    if (!typeNode || !omittedNameNode) {
+      return;
+    }
+
+    const parsedProperties = this.globalParse(typeNode, options);
+    const omitted = new Set(getLiteralValues(omittedNameNode));
+    return pickProperties(parsedProperties, { omitted });
+  }
+
+  private parseImportedType(
+    tsNode: ts.TypeReferenceNode,
+    options: Parameters<ParseFunction>[1],
+    identifier: ts.Identifier,
+    identifierSymbol: ts.Symbol
+  ): ParsedProperty[] | undefined {
+    const { typeChecker } = options;
+
+    const imports = findImports(tsNode.getSourceFile());
+
+    const importedType = imports.find((_import) => {
+      const _symbol = typeChecker.getSymbolAtLocation(_import.identifier);
+      return _symbol === identifierSymbol;
+    });
+    if (!importedType) {
+      return;
+    }
+
+    const isLocalImport = importedType.nameFromWhereImportIs.startsWith('.');
+    if (isLocalImport) {
+      const tsType = typeChecker.getTypeAtLocation(identifier!);
+      const typeDeclarations = (
+        tsType.symbol ?? tsType.aliasSymbol
+      )?.getDeclarations();
+
+      if (typeDeclarations?.length === 1) {
+        return this.globalParse(typeDeclarations[0], options);
+      }
+    }
+
+    if (importedType.nameFromWhereImportIs === 'react') {
+      // if (importedType.identifier.escapedText === 'HTMLAttributes') {
+      const tsType = typeChecker.getTypeAtLocation(identifier!);
+      const typeDeclarations = (
+        tsType.symbol ?? tsType.aliasSymbol
+      )?.getDeclarations();
+
+      if (typeDeclarations?.length === 1) {
+        return this.globalParse(typeDeclarations[0], options);
+      }
+      // }
+    }
+
+    return [
+      {
+        type: 'imported-type',
+        value: tsNode.getFullText().trim(),
+      },
+    ];
+  }
 }
 
 function findTypeDeclaration(tsType: ts.Type) {
@@ -69,4 +221,46 @@ function findTypeDeclaration(tsType: ts.Type) {
   }
 
   return symbol.getDeclarations();
+}
+
+function pickProperties(
+  parsedProperties: ParsedProperty[] | undefined,
+  names:
+    | {
+        picked: Set<string | number | undefined>;
+      }
+    | {
+        omitted: Set<string | number | undefined>;
+      }
+) {
+  if (!parsedProperties) {
+    return;
+  }
+
+  let expression: (property: ParsedProperty) => boolean;
+
+  if ('picked' in names) {
+    expression = (property) => names.picked.has(property.propertyName);
+  } else {
+    expression = (property) => !names.omitted.has(property.propertyName);
+  }
+
+  return parsedProperties
+    .map((parsedProperty) => {
+      if (parsedProperty.type !== 'object' || !parsedProperty.value) {
+        return parsedProperty;
+      }
+
+      const parsedObject: ParsedObject = {
+        ...parsedProperty,
+        value: parsedProperty.value.filter(expression),
+      };
+
+      if (!parsedObject.value?.length) {
+        return;
+      }
+
+      return parsedObject;
+    })
+    .filter(defined);
 }

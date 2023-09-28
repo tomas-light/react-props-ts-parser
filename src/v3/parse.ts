@@ -22,6 +22,9 @@ const strategies: (new (globalParse: ParseFunction) => ParserStrategy)[] = [
 ];
 
 export const parse: ParseFunction = (...args) => {
+  const [tsNode] = args;
+  const debugName = tsNode.getFullText();
+
   for (const parserConstructor of strategies) {
     const parser = new parserConstructor(parse);
     const result = parser.parse(...args);

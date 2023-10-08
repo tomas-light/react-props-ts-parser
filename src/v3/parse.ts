@@ -5,12 +5,14 @@ import { IntersectionParser } from './strategies/Intersection.parser';
 import { LiteralParser } from './strategies/Literal.parser';
 import { PrimitiveParser } from './strategies/Primitive.parser';
 import { TypeLiteralParser } from './strategies/TypeLiteral.parser';
+import { InterfaceParser } from './strategies/TypeReference/Interface.parser';
 import { TypeAliasParser } from './strategies/TypeReference/TypeAlias.parser';
 import { TypeReferenceParser } from './strategies/TypeReference/TypeReference.parser';
 import { UnionTypeParser } from './strategies/UnionType.parser';
 
 const strategies: (new (globalParse: ParseFunction) => ParserStrategy)[] = [
   //
+  InterfaceParser,
   TypeAliasParser,
   TypeLiteralParser,
   IntersectionParser,

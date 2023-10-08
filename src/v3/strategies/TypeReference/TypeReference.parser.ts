@@ -18,7 +18,10 @@ export class TypeReferenceParser extends ParserStrategy {
   parsePropertyValue: ParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
 
-    if (!ts.isTypeReferenceNode(tsNode)) {
+    if (
+      !ts.isTypeReferenceNode(tsNode) &&
+      !ts.isExpressionWithTypeArguments(tsNode)
+    ) {
       return;
     }
 
@@ -158,16 +161,21 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const typeDeclarations = findTypeDeclaration(tsType);
     typeDeclarations?.forEach((typeDeclaration) => {
+      let node: ts.Node = typeDeclaration;
       const nodeText = typeDeclaration.getFullText();
 
-      // const parentNode = typeDeclaration.parent;
-      // if (!parentNode) {
-      //   return;
-      // }
-      //
-      // const parentNodeText = parentNode.getFullText();
+      if (ts.isTypeLiteralNode(typeDeclaration)) {
+        const parentNode = typeDeclaration.parent;
+        if (!parentNode) {
+          return;
+        }
 
-      const result = this.globalParse(typeDeclaration, nestedOptions);
+        node = parentNode;
+      }
+
+      const nodeText2 = node.getFullText();
+
+      const result = this.globalParse(node, nestedOptions);
       if (result) {
         parsedProperties.push(...result);
       }
@@ -193,7 +201,7 @@ export class TypeReferenceParser extends ParserStrategy {
   }
 
   private parseNodeAsArray(
-    tsNode: ts.TypeReferenceNode,
+    tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
     const arrayParser = new ArrayParser(this.globalParse);
@@ -205,7 +213,7 @@ export class TypeReferenceParser extends ParserStrategy {
   }
 
   private parsePartialNode(
-    tsNode: ts.TypeReferenceNode,
+    tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
     const [typeNode] = tsNode.typeArguments ?? [];
@@ -226,7 +234,10 @@ export class TypeReferenceParser extends ParserStrategy {
     return parsedProperties;
   }
 
-  private parsePickedNode(tsNode: ts.TypeReferenceNode, options: ParseOptions) {
+  private parsePickedNode(
+    tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
+    options: ParseOptions
+  ) {
     const [typeNode, pickedNameNode] = tsNode.typeArguments ?? [];
     if (!typeNode || !pickedNameNode) {
       return;
@@ -238,7 +249,7 @@ export class TypeReferenceParser extends ParserStrategy {
   }
 
   private parseOmittedNode(
-    tsNode: ts.TypeReferenceNode,
+    tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
     const [typeNode, omittedNameNode] = tsNode.typeArguments ?? [];
@@ -252,7 +263,7 @@ export class TypeReferenceParser extends ParserStrategy {
   }
 
   private parseImportedType(
-    tsNode: ts.TypeReferenceNode,
+    tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions,
     identifier: ts.Identifier,
     identifierSymbol: ts.Symbol
@@ -306,8 +317,8 @@ export class TypeReferenceParser extends ParserStrategy {
 function findTypeDeclaration(tsType: ts.Type) {
   // using of ".symbol" leads us to literal declaration for simple type aliases, so we have to navigate to parent
   // node to parse it correctly, but aliasSymbol leads us to the correct node at the start
-  // todo: check with interfaces
-  const symbol = /* tsType.symbol ?? */ tsType.aliasSymbol;
+  // but interfaces have only symbol
+  const symbol = tsType.aliasSymbol ?? tsType.symbol;
   if (!symbol) {
     return;
   }

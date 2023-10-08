@@ -1,19 +1,15 @@
 import ts, { SyntaxKind } from 'typescript';
 import { ParseFunction, ParseOptions } from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
-import { ParsedGenericConstraintsMap, ParsedProperty } from '../../types';
-import { findGenericConstraint } from './findGenericConstraint';
+import { ParsedObject, ParsedProperty } from '../../types';
 import { findGenericParameterNodes } from './findGenericParameterNodes';
 import { parseGenericParameterConstraints } from './parseGenericParameterConstraints';
 
-export class TypeAliasParser extends ParserStrategy {
+export class InterfaceParser extends ParserStrategy {
   parsePropertyValue: ParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
 
-    if (
-      !ts.isTypeAliasDeclaration(tsNode) &&
-      !ts.isInterfaceDeclaration(tsNode)
-    ) {
+    if (!ts.isInterfaceDeclaration(tsNode)) {
       return;
     }
 
@@ -38,28 +34,51 @@ export class TypeAliasParser extends ParserStrategy {
 
     const parsedProperties: ParsedProperty[] = [];
 
-    tsNode.forEachChild((typeAliasNode) => {
-      const nodeText = typeAliasNode.getFullText();
+    const parsedObject: ParsedObject = {
+      type: 'object',
+      value: [],
+    };
 
-      if (typeAliasNode.kind === SyntaxKind.ExportKeyword) {
+    tsNode.forEachChild((node) => {
+      const nodeText = node.getFullText();
+
+      if (node.kind === SyntaxKind.ExportKeyword) {
         return;
       }
-      if (ts.isIdentifier(typeAliasNode)) {
+      if (ts.isIdentifier(node)) {
         return;
       }
       // generic argument already parsed
-      if (ts.isTypeParameterDeclaration(typeAliasNode)) {
+      if (ts.isTypeParameterDeclaration(node)) {
         return;
       }
 
-      const result = this.globalParse(
-        typeAliasNode,
-        optionsWithGenericParameters
-      );
+      // interface A extends B, C<string> {}
+      if (ts.isHeritageClause(node)) {
+        // B, C<string>
+        node.forEachChild((extendedNode) => {
+          const extendedNodeText = extendedNode.getFullText();
+
+          const result = this.globalParse(
+            extendedNode,
+            optionsWithGenericParameters
+          );
+          if (result) {
+            parsedProperties.push(...result);
+          }
+        });
+        return;
+      }
+
+      const result = this.globalParse(node, optionsWithGenericParameters);
       if (result) {
-        parsedProperties.push(...result);
+        parsedObject.value!.push(...result);
       }
     });
+
+    if (parsedObject.value!.length) {
+      parsedProperties.push(parsedObject);
+    }
 
     if (parsedProperties.length) {
       return parsedProperties;

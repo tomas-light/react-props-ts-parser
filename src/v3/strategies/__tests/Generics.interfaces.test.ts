@@ -4,10 +4,10 @@ import { parse } from '../../parse';
 import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty } from '../../types';
 import { flatProperties } from './flatProperties';
-import { Props } from './Generics.props';
+import { Props } from './Generics.interfaces.props';
 
-describe('[class] TypeReference parser for generics', () => {
-  const filePath = path.join(__dirname, 'Generics.props.ts');
+describe('[class] TypeReference parser for generics (interfaces version)', () => {
+  const filePath = path.join(__dirname, 'Generics.interfaces.props.ts');
 
   const parsedId: ParsedProperty = {
     type: 'union-type',
@@ -24,7 +24,7 @@ describe('[class] TypeReference parser for generics', () => {
   };
 
   const expected: {
-    [propertyName in keyof Props<any, any, any>]: [string, ParsedProperty[]];
+    [propertyName in keyof Props<any, any, any>]?: [string, ParsedProperty[]];
   } = {
     variant: [
       'Inherited properties are parsed correctly despite on generic arguments and so on',
@@ -46,7 +46,7 @@ describe('[class] TypeReference parser for generics', () => {
       ],
     ],
     name: [
-      'Inherited properties are parsed correctly despite on generic arguments and so on',
+      'Inherited properties are parsed correctly despite on generic arguments and so on #2',
       [
         {
           propertyName: 'name',
@@ -157,12 +157,6 @@ describe('[class] TypeReference parser for generics', () => {
               ...parsedId,
               propertyName: 'id',
             },
-          ],
-        },
-        {
-          propertyName: 'props_custom_object',
-          type: 'object',
-          value: [
             {
               optional: true,
               propertyName: 'info',
@@ -192,41 +186,3 @@ describe('[class] TypeReference parser for generics', () => {
     }
   );
 });
-
-// describe('[class] GenericTypeReference parser', () => {
-//   const filePath = path.join(__dirname, 'GenericTypeReference.props.ts');
-//
-//   test('temp', async () => {
-//     const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-//       filePath,
-//       'Props',
-//       testCompilerOptions
-//     ))!;
-//
-//     const result = parse(propsNode, { typeChecker });
-//     const properties = flatProperties(result);
-//     const targetProperty = properties.find(
-//       (parsedProperty) => parsedProperty!.propertyName === 'props_id_constraint'
-//     );
-//     expect(targetProperty).toEqual([
-//       {
-//         type: 'generic-constraint',
-//         value: [
-//           {
-//             type: 'union-type',
-//             value: [
-//               {
-//                 type: 'string-literal',
-//                 value: 'prop_a',
-//               },
-//               {
-//                 type: 'string-literal',
-//                 value: 'prob_b',
-//               },
-//             ],
-//           },
-//         ],
-//       },
-//     ] satisfies ParsedProperty[]);
-//   });
-// });

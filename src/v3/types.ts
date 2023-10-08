@@ -1,5 +1,10 @@
 import ts from 'typescript';
 
+export interface JsDoc {
+  comment?: string;
+  fullText?: string;
+}
+
 export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   propertyName?: string | number;
   optional?: boolean;
@@ -7,10 +12,7 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   type: Type;
   value?: Value;
 
-  jsDoc?: {
-    comment: string;
-    fullText: string;
-  };
+  jsDoc?: JsDoc;
 }
 
 export type ParsedPropertyOrGeneric = ParsedProperty[] | 'generic';

@@ -1,8 +1,7 @@
 import ts, { SyntaxKind } from 'typescript';
 import { ParseFunction, ParseOptions } from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
-import { ParsedGenericConstraintsMap, ParsedProperty } from '../../types';
-import { findGenericConstraint } from './findGenericConstraint';
+import { ParsedProperty } from '../../types';
 import { findGenericParameterNodes } from './findGenericParameterNodes';
 import { parseGenericParameterConstraints } from './parseGenericParameterConstraints';
 

@@ -6,7 +6,7 @@ import { getLiteralValues } from '../../../utils/getLiteralValues';
 import { ParseFunction, ParseOptions } from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
 import {
-  ParsedGenericConstraints,
+  ParsedPropertyOrGeneric,
   ParsedObject,
   ParsedProperty,
 } from '../../types';
@@ -33,13 +33,13 @@ export class TypeReferenceParser extends ParserStrategy {
     // find parsed generic constraint
     if (
       identifierSymbol &&
-      options.parsedGenericConstraints?.has(identifierSymbol)
+      options.parsedGenericConstraintsMap?.has(identifierSymbol)
     ) {
       // it's a generic type
-      const genericConstraints =
-        options.parsedGenericConstraints!.get(identifierSymbol)!;
+      const constraintParsedPropertyOrGeneric =
+        options.parsedGenericConstraintsMap!.get(identifierSymbol)!;
 
-      if (genericConstraints === 'generic') {
+      if (constraintParsedPropertyOrGeneric === 'generic') {
         const identifierText =
           identifier?.getFullText().trim() ?? UNKNOWN_IDENTIFIER_TEXT;
         return [
@@ -50,33 +50,36 @@ export class TypeReferenceParser extends ParserStrategy {
         ] satisfies ParsedProperty[];
       }
 
-      return genericConstraints;
+      // deep copy, because otherwise property name settled to the parameters directly
+      return JSON.parse(JSON.stringify(constraintParsedPropertyOrGeneric));
     }
 
     const typeName = identifierSymbol?.getName();
-    if (typeName && ['Array', 'ReadonlyArray'].includes(typeName)) {
-      return this.parseNodeAsArray(tsNode, options);
-    }
+    if (typeName) {
+      if (['Array', 'ReadonlyArray'].includes(typeName)) {
+        return this.parseNodeAsArray(tsNode, options);
+      }
 
-    if (typeName && ['Set', 'Map'].includes(typeName)) {
-      return [
-        {
-          type: 'not-parsed',
-          value: debugName.trim(),
-        },
-      ];
-    }
+      if (['Set', 'Map'].includes(typeName)) {
+        return [
+          {
+            type: 'not-parsed',
+            value: debugName.trim(),
+          },
+        ];
+      }
 
-    if (typeName === 'Partial') {
-      return this.parsePartialNode(tsNode, options);
-    }
+      if (typeName === 'Partial') {
+        return this.parsePartialNode(tsNode, options);
+      }
 
-    if (typeName === 'Pick') {
-      return this.parsePickedNode(tsNode, options);
-    }
+      if (typeName === 'Pick') {
+        return this.parsePickedNode(tsNode, options);
+      }
 
-    if (typeName === 'Omit') {
-      return this.parseOmittedNode(tsNode, options);
+      if (typeName === 'Omit') {
+        return this.parseOmittedNode(tsNode, options);
+      }
     }
 
     const symbolDeclarations = identifierSymbol?.getDeclarations();
@@ -121,25 +124,24 @@ export class TypeReferenceParser extends ParserStrategy {
       }
 
       if (hasGenericParameters && node.kind === SyntaxKind.SyntaxList) {
-        passedParameters = this.findPassedParameters(node);
-        continue;
+        passedParameters = this.findPassedParameterNodes(node);
       }
     }
 
     let passedGenericConstraintsAsParameterToNestedGeneric:
-      | ParsedGenericConstraints[]
+      | ParsedPropertyOrGeneric[]
       | undefined;
 
     if (passedParameters) {
       passedGenericConstraintsAsParameterToNestedGeneric = [];
 
-      passedParameters.forEach((node) => {
-        const nodeText = node.getFullText();
+      passedParameters.forEach((passedParameterNode) => {
+        const nodeText = passedParameterNode.getFullText();
 
-        const parsedPropertiesOfParameter = this.globalParse(node, options);
-        if (parsedPropertiesOfParameter) {
+        const parsedParameter = this.globalParse(passedParameterNode, options);
+        if (parsedParameter) {
           passedGenericConstraintsAsParameterToNestedGeneric!.push(
-            parsedPropertiesOfParameter
+            parsedParameter
           );
         }
       });
@@ -156,14 +158,16 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const typeDeclarations = findTypeDeclaration(tsType);
     typeDeclarations?.forEach((typeDeclaration) => {
-      const typeNode = typeDeclaration.parent;
-      if (!typeNode) {
-        return;
-      }
+      const nodeText = typeDeclaration.getFullText();
 
-      const nodeText = typeNode.getFullText();
+      // const parentNode = typeDeclaration.parent;
+      // if (!parentNode) {
+      //   return;
+      // }
+      //
+      // const parentNodeText = parentNode.getFullText();
 
-      const result = this.globalParse(typeNode, nestedOptions);
+      const result = this.globalParse(typeDeclaration, nestedOptions);
       if (result) {
         parsedProperties.push(...result);
       }
@@ -174,16 +178,18 @@ export class TypeReferenceParser extends ParserStrategy {
     }
   };
 
-  private findPassedParameters(syntaxListNode: ts.Node) {
-    const passedAsParameterNodes: ts.Node[] = [];
+  private findPassedParameterNodes(syntaxListNode: ts.Node) {
+    const passedNodes: ts.Node[] = [];
 
     for (const parameterNode of syntaxListNode.getChildren()) {
+      // property: Option<Id, Value, SomethingElse, T>;
+      // here syntax list is "Id, Value, SomethingElse, T"
       if (parameterNode.kind !== SyntaxKind.CommaToken) {
-        passedAsParameterNodes.push(parameterNode);
+        passedNodes.push(parameterNode);
       }
     }
 
-    return passedAsParameterNodes;
+    return passedNodes;
   }
 
   private parseNodeAsArray(
@@ -298,7 +304,10 @@ export class TypeReferenceParser extends ParserStrategy {
 }
 
 function findTypeDeclaration(tsType: ts.Type) {
-  const symbol = tsType.symbol ?? tsType.aliasSymbol;
+  // using of ".symbol" leads us to literal declaration for simple type aliases, so we have to navigate to parent
+  // node to parse it correctly, but aliasSymbol leads us to the correct node at the start
+  // todo: check with interfaces
+  const symbol = /* tsType.symbol ?? */ tsType.aliasSymbol;
   if (!symbol) {
     return;
   }

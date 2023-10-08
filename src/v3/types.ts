@@ -13,10 +13,10 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   };
 }
 
-export type ParsedGenericConstraints = ParsedProperty[] | 'generic';
+export type ParsedPropertyOrGeneric = ParsedProperty[] | 'generic';
 export type ParsedGenericConstraintsMap = Map<
-  ts.Symbol,
-  ParsedGenericConstraints
+  ts.Symbol, // symbol of identifier to generic parameter
+  ParsedPropertyOrGeneric // if generic parameter has constraint, here is parsed property of this constraint
 >;
 
 export type ParsedProperty =

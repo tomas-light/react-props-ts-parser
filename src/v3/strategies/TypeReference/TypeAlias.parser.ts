@@ -23,36 +23,35 @@ export class TypeAliasParser extends ParserStrategy {
       }
 
       if (hasGenericParameters && node.kind === SyntaxKind.SyntaxList) {
-        genericParameterNodes = this.findGenericParameters(node);
-        continue;
+        genericParameterNodes = this.findParameterNodes(node);
       }
     }
 
-    const parsedGenericConstraints: ParsedGenericConstraintsMap = new Map();
+    const parsedGenericConstraintsMap: ParsedGenericConstraintsMap = new Map();
 
-    genericParameterNodes?.forEach((node, parameterIndex) => {
-      const nodeText = node.getFullText();
+    genericParameterNodes?.forEach((genericParameterNode, parameterIndex) => {
+      const nodeText = genericParameterNode.getFullText();
 
       const parsedGenericConstraint = this.findAndParseGenericConstraint(
-        node,
+        genericParameterNode,
         options,
         parameterIndex
       );
       if (parsedGenericConstraint) {
         const [identifier, parsed] = parsedGenericConstraint;
-        parsedGenericConstraints.set(identifier, parsed);
+        parsedGenericConstraintsMap.set(identifier, parsed);
       }
     });
 
     const optionsWithGenericParameters: ParseOptions = {
       ...options,
-      parsedGenericConstraints: new Map(),
+      parsedGenericConstraintsMap: new Map(),
     };
-    options.parsedGenericConstraints?.forEach((value, key) => {
-      optionsWithGenericParameters.parsedGenericConstraints!.set(key, value);
+    options.parsedGenericConstraintsMap?.forEach((value, key) => {
+      optionsWithGenericParameters.parsedGenericConstraintsMap!.set(key, value);
     });
-    parsedGenericConstraints.forEach((value, key) => {
-      optionsWithGenericParameters.parsedGenericConstraints!.set(key, value);
+    parsedGenericConstraintsMap.forEach((value, key) => {
+      optionsWithGenericParameters.parsedGenericConstraintsMap!.set(key, value);
     });
 
     const parsedProperties: ParsedProperty[] = [];
@@ -85,18 +84,18 @@ export class TypeAliasParser extends ParserStrategy {
     }
   };
 
-  private findGenericParameters(syntaxListNode: ts.Node) {
-    const genericParameterNodes: ts.TypeParameterDeclaration[] = [];
+  private findParameterNodes(syntaxListNode: ts.Node) {
+    const parameterNodes: ts.TypeParameterDeclaration[] = [];
 
-    for (const parameterNode of syntaxListNode.getChildren()) {
-      const nodeText = parameterNode.getFullText();
+    for (const node of syntaxListNode.getChildren()) {
+      const nodeText = node.getFullText();
 
-      if (ts.isTypeParameterDeclaration(parameterNode)) {
-        genericParameterNodes.push(parameterNode);
+      if (ts.isTypeParameterDeclaration(node)) {
+        parameterNodes.push(node);
       }
     }
 
-    return genericParameterNodes;
+    return parameterNodes;
   }
 
   private findAndParseGenericConstraint(
@@ -120,6 +119,10 @@ export class TypeAliasParser extends ParserStrategy {
       }
     }
 
+    /** Props<Id extends number> {...}
+     * to be able to connect "number" constraint to "Id", we use identifier symbol of "Id"
+     * if such symbol is undefined - we cannot proceed with this relation
+     */
     if (!identifierSymbol) {
       return;
     }

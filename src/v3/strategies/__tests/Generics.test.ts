@@ -24,108 +24,144 @@ describe('[class] TypeReference parser for generics', () => {
   };
 
   const expected: {
-    [propertyName in keyof Props<any, any, any>]?: [string, ParsedProperty];
+    [propertyName in keyof Props<any, any, any>]?: [string, ParsedProperty[]];
   } = {
     variant: [
       'Inherited properties are parsed correctly despite on generic arguments and so on',
-      {
-        propertyName: 'variant',
-        type: 'union-type',
-        value: [
-          {
-            type: 'string-literal',
-            value: 'a',
-          },
-          {
-            type: 'string-literal',
-            value: 'b',
-          },
-        ],
-      },
+      [
+        {
+          propertyName: 'variant',
+          type: 'union-type',
+          value: [
+            {
+              type: 'string-literal',
+              value: 'a',
+            },
+            {
+              type: 'string-literal',
+              value: 'b',
+            },
+          ],
+        },
+      ],
     ],
     props_id_constraint: [
       'Generic argument Id with constraints: constraint is taken for parsed property',
-      {
-        ...parsedId,
-        propertyName: 'props_id_constraint',
-      },
+      [
+        {
+          ...parsedId,
+          propertyName: 'props_id_constraint',
+        },
+      ],
     ],
     props_value: [
       'Generic argument Value: "Value" is used as parsed property value with type "generic-constraint"',
-      {
-        propertyName: 'props_value',
-        type: 'generic-constraint',
-        value: 'Value',
-      },
+      [
+        {
+          propertyName: 'props_value',
+          type: 'generic-constraint',
+          value: 'Value',
+        },
+      ],
     ],
     props_array: [
       'Generic argument Value: "Value[]" is parsed correctly',
-      {
-        propertyName: 'props_array',
-        type: 'array',
-        value: [
-          {
-            type: 'generic-constraint',
-            value: 'Value',
-          },
-        ],
-      },
+      [
+        {
+          propertyName: 'props_array',
+          type: 'array',
+          value: [
+            {
+              type: 'generic-constraint',
+              value: 'Value',
+            },
+          ],
+        },
+      ],
     ],
     props_option: [
       "Generics passed to next generic type: \"Option<Id, 'id_100' | 'id_200'>\" is parsed correctly",
-      {
-        propertyName: 'props_option',
-        type: 'object',
-        value: [
-          {
-            ...parsedId,
-            propertyName: 'label',
-          },
-          {
-            propertyName: 'value',
-            type: 'union-type',
-            value: [
-              {
-                type: 'string-literal',
-                value: 'id_100',
-              },
-              {
-                type: 'string-literal',
-                value: 'id_200',
-              },
-            ],
-          },
-        ],
-      },
+      [
+        {
+          propertyName: 'props_option',
+          type: 'object',
+          value: [
+            {
+              ...parsedId,
+              propertyName: 'label',
+            },
+            {
+              propertyName: 'value',
+              type: 'union-type',
+              value: [
+                {
+                  type: 'string-literal',
+                  value: 'id_100',
+                },
+                {
+                  type: 'string-literal',
+                  value: 'id_200',
+                },
+              ],
+            },
+          ],
+        },
+      ],
     ],
     props_multi_option: [
       'Generics passed to next generic type thet inherits third generic type: "MultiOption<Id, MultiValue>" parsed correctly',
-      {
-        propertyName: 'props_multi_option',
-        type: 'object',
-        value: [
-          {
-            ...parsedId,
-            propertyName: 'label',
-          },
-          {
-            propertyName: 'value',
-            type: 'bigint',
-          },
-          {
-            propertyName: 'multi_value',
-            type: 'number',
-          },
-        ],
-      },
+      [
+        {
+          propertyName: 'props_multi_option',
+          type: 'object',
+          value: [
+            {
+              ...parsedId,
+              propertyName: 'label',
+            },
+            {
+              propertyName: 'value',
+              type: 'bigint',
+            },
+          ],
+        },
+        {
+          propertyName: 'props_multi_option',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'multi_value',
+              type: 'number',
+            },
+          ],
+        },
+      ],
     ],
     props_custom_object: [
       "Generics passed to next generic with object nexted property as generic: Pick<Custom<{ id: Id }>, 'id' | 'info'> is parsed correctly",
-      {
-        propertyName: 'props_custom_object',
-        // todo:
-        type: 'unknown',
-      },
+      [
+        {
+          propertyName: 'props_custom_object',
+          type: 'object',
+          value: [
+            {
+              ...parsedId,
+              propertyName: 'id',
+            },
+          ],
+        },
+        {
+          propertyName: 'props_custom_object',
+          type: 'object',
+          value: [
+            {
+              optional: true,
+              propertyName: 'info',
+              type: 'string',
+            },
+          ],
+        },
+      ],
     ],
   };
 
@@ -140,7 +176,7 @@ describe('[class] TypeReference parser for generics', () => {
 
       const result = parse(propsNode, { typeChecker });
       const properties = flatProperties(result);
-      const targetProperty = properties.find(
+      const targetProperty = properties.filter(
         (parsedProperty) => parsedProperty!.propertyName === propertyName
       );
       expect(targetProperty).toEqual(expectedValue);

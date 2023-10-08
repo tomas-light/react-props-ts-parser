@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import {
-  ParsedGenericConstraints,
+  ParsedPropertyOrGeneric,
   ParsedGenericConstraintsMap,
   ParsedProperty,
 } from './types';
@@ -8,8 +8,22 @@ import {
 export type ParseOptions = {
   typeChecker: ts.TypeChecker;
   typeArguments?: ts.NodeArray<ts.TypeNode>;
-  parsedGenericConstraints?: ParsedGenericConstraintsMap;
-  passedGenericConstraintsAsParameterToNestedGeneric?: ParsedGenericConstraints[];
+  /**
+   * relation between parsed constraint and its parameter:
+   * @example
+   * type Props<Id extends number> { ... }
+   *
+   * in the map we will have [<Id identifier symbol>, [ { type: "number" } ]]
+   * */
+  parsedGenericConstraintsMap?: ParsedGenericConstraintsMap;
+  /**
+   * when you have generic props that pass its generic further, like:
+   * @example
+   * type Props<Id extends number> {
+   *   option: Option<Id>;
+   * }
+   * */
+  passedGenericConstraintsAsParameterToNestedGeneric?: ParsedPropertyOrGeneric[];
 };
 
 export type ParseFunction = (

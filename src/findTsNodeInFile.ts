@@ -4,7 +4,7 @@ import ts from 'typescript';
 export async function findTsNodeInFile(
   filePath: string,
   nodeName: string,
-  compilerOptions: ts.CompilerOptions,
+  compilerOptions: ts.CompilerOptions
 ): Promise<
   | {
       tsNode: ts.TypeAliasDeclaration | ts.InterfaceDeclaration;

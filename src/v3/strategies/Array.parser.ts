@@ -14,6 +14,8 @@ export class ArrayParser extends ParserStrategy {
     // prop: readonly string[];
     if (ts.isTypeOperatorNode(tsNode)) {
       for (const readonlyChildNode of tsNode.getChildren()) {
+        const nodeText = readonlyChildNode.getFullText();
+
         const result = this.parsePropertyValue(readonlyChildNode, options);
         if (result) {
           return result;
@@ -30,6 +32,8 @@ export class ArrayParser extends ParserStrategy {
     };
 
     tsNode.forEachChild((itemNode) => {
+      const nodeText = itemNode.getFullText();
+
       const itemProperties = this.globalParse(itemNode, options);
       if (itemProperties) {
         parsedProperty.value!.push(...itemProperties);

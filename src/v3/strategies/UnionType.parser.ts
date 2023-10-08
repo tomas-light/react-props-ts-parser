@@ -17,6 +17,8 @@ export class UnionTypeParser extends ParserStrategy {
     };
 
     tsNode.forEachChild((itemNode) => {
+      const nodeText = itemNode.getFullText();
+
       const unionProperties = this.globalParse(itemNode, options);
       if (unionProperties) {
         parsedProperty.value!.push(...unionProperties);

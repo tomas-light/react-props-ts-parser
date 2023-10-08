@@ -13,9 +13,10 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   };
 }
 
-export type GenericTypeParameters = Map<
-  ts.Identifier,
-  ParsedProperty[] | 'generic'
+export type ParsedGenericConstraints = ParsedProperty[] | 'generic';
+export type ParsedGenericConstraintsMap = Map<
+  ts.Symbol,
+  ParsedGenericConstraints
 >;
 
 export type ParsedProperty =
@@ -38,7 +39,7 @@ export type ParsedProperty =
   | ParsedObject
   | ParsedImportedReactType
   | ParsedImportedType
-  | ParsedGenericConstraint
+  | ParsedGenericPropertyConstraint
   | NotParsedType;
 
 export interface ParsedString extends ParsedPropertyDescriptor<'string'> {}
@@ -89,8 +90,11 @@ export interface ParsedImportedReactType
 export interface ParsedImportedType
   extends ParsedPropertyDescriptor<'imported-type', string> {}
 
-export interface ParsedGenericConstraint
-  extends ParsedPropertyDescriptor<'generic-constraint', ParsedProperty[]> {}
+export interface ParsedGenericPropertyConstraint
+  extends ParsedPropertyDescriptor<
+    'generic-constraint',
+    ParsedProperty[] | string
+  > {}
 
 export interface NotParsedType
   extends ParsedPropertyDescriptor<'not-parsed', string> {}

@@ -14,6 +14,8 @@ export class IntersectionParser extends ParserStrategy {
     const parsedProperties: ParsedProperty[] = [];
 
     tsNode.forEachChild((childNode) => {
+      const nodeText = childNode.getFullText();
+
       const result = this.globalParse(childNode, options);
       if (result) {
         parsedProperties.push(...result);

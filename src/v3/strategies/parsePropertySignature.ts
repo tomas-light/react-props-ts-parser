@@ -18,6 +18,8 @@ export function parsePropertySignature(
   let parsedProperties: ParsedProperty[] | undefined;
 
   ts.forEachChild(tsNode, (propertyNode) => {
+    const nodeText = propertyNode.getFullText();
+
     if (ts.isIdentifier(propertyNode)) {
       propertyName = propertyNode.text;
       return;

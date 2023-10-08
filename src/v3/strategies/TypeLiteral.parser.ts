@@ -17,6 +17,8 @@ export class TypeLiteralParser extends ParserStrategy {
     };
 
     tsNode.forEachChild((propertyNode) => {
+      const nodeText = propertyNode.getFullText();
+
       const result = this.globalParse(propertyNode, options);
       if (result) {
         parsedProperties.value!.push(...result);

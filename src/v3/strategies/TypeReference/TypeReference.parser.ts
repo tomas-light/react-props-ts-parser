@@ -103,18 +103,6 @@ export class TypeReferenceParser extends ParserStrategy {
       }
     }
 
-    // const { tsType, constraint: genericTypeConstraint } =
-    //   findNodeGenericConstraint(tsNode, typeChecker);
-    //
-    // const isGenericConstraint = genericTypeConstraint != null;
-    // if (isGenericConstraint) {
-    //   const genericParser = new GenericTypeReferenceParser(this.globalParse);
-    //   const result = genericParser.parse(tsNode, options);
-    //   if (result) {
-    //     return result;
-    //   }
-    // }
-
     let hasGenericParameters = false;
     let passedParameters: ts.Node[] | undefined;
 
@@ -176,6 +164,14 @@ export class TypeReferenceParser extends ParserStrategy {
       const nodeText2 = node.getFullText();
 
       const result = this.globalParse(node, nestedOptions);
+      if (options.skipTypeAliasAndInterfaces) {
+        result?.forEach((property) => {
+          if (property.type === 'prevented-from-parsing') {
+            property.value = debugName.trim();
+          }
+        });
+      }
+
       if (result) {
         parsedProperties.push(...result);
       }
@@ -204,6 +200,8 @@ export class TypeReferenceParser extends ParserStrategy {
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
+    const debugName = tsNode.getFullText();
+
     const arrayParser = new ArrayParser(this.globalParse);
     const result = arrayParser.parseArray(tsNode, options);
     if (result) {
@@ -216,6 +214,8 @@ export class TypeReferenceParser extends ParserStrategy {
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
+    const debugName = tsNode.getFullText();
+
     const [typeNode] = tsNode.typeArguments ?? [];
     if (!typeNode) {
       return;
@@ -238,6 +238,8 @@ export class TypeReferenceParser extends ParserStrategy {
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
+    const debugName = tsNode.getFullText();
+
     const [typeNode, pickedNameNode] = tsNode.typeArguments ?? [];
     if (!typeNode || !pickedNameNode) {
       return;
@@ -252,6 +254,8 @@ export class TypeReferenceParser extends ParserStrategy {
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
+    const debugName = tsNode.getFullText();
+
     const [typeNode, omittedNameNode] = tsNode.typeArguments ?? [];
     if (!typeNode || !omittedNameNode) {
       return;
@@ -268,6 +272,8 @@ export class TypeReferenceParser extends ParserStrategy {
     identifier: ts.Identifier,
     identifierSymbol: ts.Symbol
   ): ParsedProperty[] | undefined {
+    const debugName = tsNode.getFullText();
+
     const { typeChecker } = options;
 
     const imports = findImports(tsNode.getSourceFile());
@@ -293,21 +299,39 @@ export class TypeReferenceParser extends ParserStrategy {
     }
 
     if (importedType.nameFromWhereImportIs === 'react') {
-      // if (importedType.identifier.escapedText === 'HTMLAttributes') {
-      const tsType = typeChecker.getTypeAtLocation(identifier!);
+      const tsType = typeChecker.getTypeAtLocation(identifier);
       const typeDeclarations = (
         tsType.symbol ?? tsType.aliasSymbol
       )?.getDeclarations();
 
       if (typeDeclarations?.length === 1) {
-        return this.globalParse(typeDeclarations[0], options);
+        const parsedProperties = this.globalParse(typeDeclarations[0], {
+          ...options,
+          skipTypeAliasAndInterfaces: true,
+        });
+
+        if (parsedProperties) {
+          const type = tsNode.getFullText().trim();
+
+          parsedProperties.forEach((property) => {
+            property.import = {
+              type,
+              moduleName: importedType.nameFromWhereImportIs,
+            };
+          });
+        }
+
+        return parsedProperties;
       }
-      // }
     }
 
     return [
       {
         type: 'imported-type',
+        import: {
+          type: tsNode.getFullText().trim(),
+          moduleName: importedType.nameFromWhereImportIs,
+        },
         value: tsNode.getFullText().trim(),
       },
     ];

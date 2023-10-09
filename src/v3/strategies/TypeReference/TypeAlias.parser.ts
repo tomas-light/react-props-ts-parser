@@ -16,6 +16,15 @@ export class TypeAliasParser extends ParserStrategy {
       return;
     }
 
+    if (options.skipTypeAliasAndInterfaces) {
+      return [
+        {
+          type: 'prevented-from-parsing',
+          value: debugName.trim(),
+        },
+      ];
+    }
+
     const genericParameterNodes = findGenericParameterNodes(tsNode);
 
     const parsedGenericConstraintsMap = parseGenericParameterConstraints(

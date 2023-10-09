@@ -17,14 +17,37 @@ export function parsePropertySignature(
   let isOptional = false;
   let propertyName: string | undefined;
   let parsedProperties: ParsedProperty[] | undefined;
-  const jsDoc: ParsedProperty['jsDoc'] = parseJsDoc(tsNode, options);
+  const jsDoc = parseJsDoc(tsNode, options);
 
   ts.forEachChild(tsNode, (propertyNode) => {
     const nodeText = propertyNode.getFullText();
 
-    const result = parseJsDoc(propertyNode, options);
-
     if (ts.isIdentifier(propertyNode)) {
+      propertyName = propertyNode.text;
+      return;
+    }
+
+    /**
+     * for cases like:
+     * @example
+     * interface AriaAttributes {
+     *   'aria-activedescendant'?: string | undefined;
+     *   ...
+     * }
+     * */
+    if (!propertyName && ts.isLiteralTypeNode(propertyNode)) {
+      if (
+        ts.isStringLiteral(propertyNode.literal) ||
+        ts.isNumericLiteral(propertyNode.literal)
+      ) {
+        propertyName = propertyNode.literal.text;
+        return;
+      }
+    }
+    if (
+      !propertyName &&
+      (ts.isStringLiteral(propertyNode) || ts.isNumericLiteral(propertyNode))
+    ) {
       propertyName = propertyNode.text;
       return;
     }
@@ -42,9 +65,30 @@ export function parsePropertySignature(
 
   parsedProperties.forEach((property) => {
     property.propertyName ??= propertyName;
+
     if (isOptional) {
       property.optional = true;
+
+      // sanitize extra type "children?: ReactNode | undefined" => "children?: ReactNode"
+      // it allows to reduce generated code
+      if (
+        property.type === 'union-type' &&
+        property.value?.some(
+          (unionProperty) => unionProperty.type === 'undefined'
+        )
+      ) {
+        const unionWithoutUndefined = property.value!.filter(
+          (unionProperty) => unionProperty.type !== 'undefined'
+        );
+        if (unionWithoutUndefined.length === 1) {
+          const [realProperty] = unionWithoutUndefined;
+
+          (property as ParsedProperty).type = realProperty.type;
+          (property as ParsedProperty).value = realProperty.value;
+        }
+      }
     }
+
     if (jsDoc) {
       property.jsDoc ??= jsDoc;
     }

@@ -24,6 +24,11 @@ export type ParseOptions = {
    * }
    * */
   passedGenericConstraintsAsParameterToNestedGeneric?: ParsedPropertyOrGeneric[];
+
+  /**
+   * omit parsing of TypeAlias and Interface, suitable when you parse imported type (like HtmlAttributes) and want to prevent deep diving (and parsing break)
+   * */
+  skipTypeAliasAndInterfaces?: boolean;
 };
 
 export type ParseFunction = (

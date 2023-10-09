@@ -36,5 +36,3 @@ export type Props = {
   props_localImportedType: LocalImportedType;
   props_pickLocalImportedType: Pick<LocalImportedType, 'juice'>;
 };
-
-export const TestComponent: FC<Props> = () => null as any;

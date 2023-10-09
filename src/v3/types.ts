@@ -13,6 +13,14 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   value?: Value;
 
   jsDoc?: JsDoc;
+
+  /** for types imported from React, DayJs and so on */
+  import?: {
+    /** something like "HTMLAttributes<HTMLDivElement>" */
+    type?: string;
+    /** something like "react", "dayjs" */
+    moduleName?: string;
+  };
 }
 
 export type ParsedPropertyOrGeneric = ParsedProperty[] | 'generic';
@@ -42,7 +50,8 @@ export type ParsedProperty =
   | ParsedImportedReactType
   | ParsedImportedType
   | ParsedGenericPropertyConstraint
-  | NotParsedType;
+  | NotParsedType
+  | PreventedFromParsingType;
 
 export interface ParsedString extends ParsedPropertyDescriptor<'string'> {}
 
@@ -100,3 +109,6 @@ export interface ParsedGenericPropertyConstraint
 
 export interface NotParsedType
   extends ParsedPropertyDescriptor<'not-parsed', string> {}
+
+export interface PreventedFromParsingType
+  extends ParsedPropertyDescriptor<'prevented-from-parsing', string> {}

@@ -178,6 +178,10 @@ describe('[class] TypeReference parser', () => {
         propertyName: 'props_dayjs',
         type: 'imported-type',
         value: 'Dayjs',
+        import: {
+          moduleName: 'dayjs',
+          type: 'Dayjs',
+        },
       },
     ],
     props_localImportedType: [

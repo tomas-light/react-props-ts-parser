@@ -298,7 +298,37 @@ export class TypeReferenceParser extends ParserStrategy {
       }
     }
 
+    const nodeName = identifierSymbol.getName();
+
     if (importedType.nameFromWhereImportIs === 'react') {
+      if (['ReactNode', 'ReactElement', 'CSSProperties'].includes(nodeName)) {
+        return [
+          {
+            type: 'imported-type',
+            import: {
+              type: nodeName,
+              moduleName: importedType.nameFromWhereImportIs,
+            },
+            value: nodeName,
+          },
+        ];
+      }
+
+      // todo: add cache
+      // let cacheOrProperties = options.cachedParsedMap.get(identifierSymbol);
+      // if (cacheOrProperties) {
+      //   if (Array.isArray(cacheOrProperties)) {
+      //     return cacheOrProperties;
+      //   }
+      //
+      //   if (options.passedGenericConstraintsAsParameterToNestedGeneric) {
+      //     tsNode.typeArguments;
+      //   }
+      // } else {
+      //   cacheOrProperties = new Map();
+      //   options.cachedParsedMap.set(identifierSymbol, cacheOrProperties);
+      // }
+
       const tsType = typeChecker.getTypeAtLocation(identifier);
       const typeDeclarations = (
         tsType.symbol ?? tsType.aliasSymbol
@@ -329,10 +359,10 @@ export class TypeReferenceParser extends ParserStrategy {
       {
         type: 'imported-type',
         import: {
-          type: tsNode.getFullText().trim(),
+          type: nodeName,
           moduleName: importedType.nameFromWhereImportIs,
         },
-        value: tsNode.getFullText().trim(),
+        value: nodeName,
       },
     ];
   }

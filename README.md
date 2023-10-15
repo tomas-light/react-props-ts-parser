@@ -51,134 +51,160 @@ type Props<Id extends string> =
 
 to JSON:
 ```json
-{
-  "type": "intersection-type",
-  "value": {
-    "inherited": [
+[
+  {
+    "type": "object",
+    "value": [
       {
-        "type": "object",
-        "value": {}
+        "optional": true,
+        "propertyName": "backgroundColor",
+        "type": "string"
       }
-    ],
-    "self": {
-      "type": "object",
-      "value": {
-        "id": {
-          "type": "generic-constraint",
-          "value": "string"
+    ]
+  },
+  {
+    "type": "object",
+    "value": [
+      {
+        "propertyName": "id",
+        "type": "string"
+      },
+      {
+        "optional": true,
+        "propertyName": "className",
+        "type": "string"
+      },
+      {
+        "jsDoc": {
+          "comment": "my property description",
+          "fullText": "/**\n   * my property description\n   * @example\n   * <TestComponent open={true} />\n   */"
         },
-        "className": {
-          "optional": true,
-          "type": "string"
-        },
-        "open": {
-          "type": "boolean",
-          "jsDoc": {
-            "comment": "my property description",
-            "fullText": "/**\n   * my property description\n   * @example\n   * <TestComponent open={true} />\n   */"
+        "propertyName": "open",
+        "type": "boolean"
+      },
+      {
+        "propertyName": "onClick",
+        "type": "function"
+      },
+      {
+        "optional": true,
+        "propertyName": "size",
+        "type": "union-type",
+        "value": [
+          {
+            "type": "string-literal",
+            "value": "16"
+          },
+          {
+            "type": "string-literal",
+            "value": "24"
+          },
+          {
+            "type": "number-literal",
+            "value": 36
           }
-        },
-        "onClick": {
-          "type": "function"
-        },
-        "size": {
-          "optional": true,
-          "type": "union-type",
-          "values": [
-            {
-              "type": "string-literal",
-              "value": "16"
-            },
-            {
-              "type": "string-literal",
-              "value": "24"
-            },
-            {
-              "type": "number-literal",
-              "value": 36
-            }
-          ]
-        },
-        "count": {
-          "type": "number"
-        },
-        "options": {
-          "type": "array",
-          "values": [
-            {
-              "type": "object",
-              "value": {
-                "label": {
-                  "type": "union-type",
-                  "values": [
-                    {
-                      "type": "string-literal",
-                      "value": "name"
-                    },
-                    {
-                      "type": "string-literal",
-                      "value": "title"
-                    }
-                  ]
-                },
-                "value": {
-                  "type": "number"
-                }
+        ]
+      },
+      {
+        "propertyName": "count",
+        "type": "number"
+      },
+      {
+        "propertyName": "options",
+        "type": "array",
+        "value": [
+          {
+            "type": "object",
+            "value": [
+              {
+                "propertyName": "label",
+                "type": "union-type",
+                "value": [
+                  {
+                    "type": "string-literal",
+                    "value": "name"
+                  },
+                  {
+                    "type": "string-literal",
+                    "value": "title"
+                  }
+                ]
+              },
+              {
+                "propertyName": "value",
+                "type": "number"
               }
-            }
-          ]
+            ]
+          }
+        ]
+      },
+      {
+        "import": {
+          "moduleName": "react",
+          "type": "ReactNode"
         },
-        "classes": {
-          "type": "not-parsed",
-          "value": "Record<string, string>"
-        },
-        "children": {
-          "type": "imported-type",
-          "value": "ReactNode"
-        },
-        "someChildren": {
-          "type": "array",
-          "values": [
-            {
-              "type": "imported-type",
-              "value": "ReactElement<SomeOtherProps<Id>>"
-            }
-          ]
-        },
-        "style": {
-          "optional": true,
-          "type": "imported-type",
-          "value": "CSSProperties"
-        },
-        "variant": {
-          "type": "union-type",
-          "values": [
-            {
-              "type": "string-literal",
-              "value": "success"
+        "propertyName": "children",
+        "type": "imported-type",
+        "value": "ReactNode"
+      },
+      {
+        "propertyName": "someChildren",
+        "type": "array",
+        "value": [
+          {
+            "import": {
+              "moduleName": "react",
+              "type": "ReactElement"
             },
-            {
-              "type": "string-literal",
-              "value": "info"
-            },
-            {
-              "type": "string-literal",
-              "value": "warning"
-            },
-            {
-              "type": "string-literal",
-              "value": "error"
-            }
-          ]
+            "type": "imported-type",
+            "value": "ReactElement"
+          }
+        ]
+      },
+      {
+        "import": {
+          "moduleName": "react",
+          "type": "CSSProperties"
         },
-        "date": {
-          "type": "imported-type",
-          "value": "Dayjs"
-        }
+        "optional": true,
+        "propertyName": "style",
+        "type": "imported-type",
+        "value": "CSSProperties"
+      },
+      {
+        "propertyName": "variant",
+        "type": "union-type",
+        "value": [
+          {
+            "type": "string-literal",
+            "value": "success"
+          },
+          {
+            "type": "string-literal",
+            "value": "info"
+          },
+          {
+            "type": "string-literal",
+            "value": "warning"
+          },
+          {
+            "type": "string-literal",
+            "value": "error"
+          }
+        ]
+      },
+      {
+        "import": {
+          "moduleName": "dayjs",
+          "type": "Dayjs"
+        },
+        "propertyName": "date",
+        "type": "imported-type",
+        "value": "Dayjs"
       }
-    }
+    ]
   }
-}
+]
 ```
 
 ### How to use
@@ -186,7 +212,7 @@ to JSON:
 ```ts
 import path from 'path';
 import ts from 'typescript';
-import { parsePropsInFile } from 'react-props-ts-parser';
+import { findTsNodeInFile, parse } from 'react-props-ts-parser';
 
 // you can try to use tsconf.json compilerOptions, but there are type incompatibilities
 const compilerOptions: ts.CompilerOptions = {
@@ -212,8 +238,14 @@ const compilerOptions: ts.CompilerOptions = {
   target: ts.ScriptTarget.ESNext,
 };
 
-const { source, parsed } = parsePropsInFile(
+const found = await findTsNodeInFile(
   path.join('src', 'TestComponent.tsx'),
-  compilerOptions,
+  'Props',
+  testCompilerOptions
 );
+
+if (found) {
+  const { tsNode, typeChecker } = found;
+  const parsedProperties = parse(tsNode, { typeChecker });
+}
 ```

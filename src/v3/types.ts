@@ -1,4 +1,5 @@
 import ts from 'typescript';
+import { internalSymbol } from './symbols';
 
 export interface JsDoc {
   comment?: string;
@@ -14,6 +15,10 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   cachedValueRef?: ts.Symbol;
   /** "Props" / "HTMLAttributes<HTMLDivElement>" */
   nodeText?: string;
+
+  [internalSymbol]?: {
+    isGenericArgument?: boolean;
+  };
 
   jsDoc?: JsDoc;
 

@@ -1,7 +1,8 @@
 import ts from 'typescript';
-import { ParseFunction } from '../ParseFunction';
-import { ParsedProperty } from '../types';
-import { parseJsDoc } from './parseJsDoc';
+import { ParseFunction } from './ParseFunction';
+import { internalSymbol } from './symbols';
+import { ParsedProperty } from './types';
+import { parseJsDoc } from './strategies/parseJsDoc';
 
 export function parsePropertySignature(
   parse: ParseFunction,
@@ -62,6 +63,28 @@ export function parsePropertySignature(
   if (!parsedProperties) {
     return;
   }
+
+  // passed generics may be used at several places,
+  // we have copy top level to be able to set different propertyNames and so on
+  parsedProperties = parsedProperties.map((property) => {
+    if (property[internalSymbol]?.isGenericArgument) {
+      const copy: ParsedProperty = {
+        ...property,
+        [internalSymbol]: {
+          ...property[internalSymbol],
+        },
+      };
+      delete copy[internalSymbol]!.isGenericArgument;
+
+      if (Object.keys(copy[internalSymbol]!).length === 0) {
+        delete copy[internalSymbol];
+      }
+
+      return copy;
+    }
+
+    return property;
+  });
 
   parsedProperties.forEach((property) => {
     property.propertyName ??= propertyName;

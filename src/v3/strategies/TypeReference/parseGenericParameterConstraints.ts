@@ -1,7 +1,9 @@
 import ts from 'typescript';
 import { ParseFunction, ParseOptions } from '../../ParseFunction';
+import { internalSymbol } from '../../symbols';
 import { ParsedGenericConstraintsMap } from '../../types';
 import { findGenericConstraint } from './findGenericConstraint';
+import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
 
 export function parseGenericParameterConstraints(
   globalParse: ParseFunction,
@@ -39,6 +41,10 @@ export function parseGenericParameterConstraints(
     if (constraint) {
       const parsedProperties = globalParse(constraint, options);
       if (parsedProperties) {
+        parsedProperties.forEach((property) => {
+          markPropertyAsInternalGeneric(property);
+        });
+
         parsedGenericConstraintsMap.set(identifierSymbol, parsedProperties);
         return;
       }

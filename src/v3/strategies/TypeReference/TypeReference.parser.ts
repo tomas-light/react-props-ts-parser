@@ -11,6 +11,7 @@ import {
   ParsedProperty,
 } from '../../types';
 import { ArrayParser } from '../Array.parser';
+import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
 
 export const UNKNOWN_IDENTIFIER_TEXT = 'unknown_identifier';
 
@@ -53,8 +54,7 @@ export class TypeReferenceParser extends ParserStrategy {
         ] satisfies ParsedProperty[];
       }
 
-      // deep copy, because otherwise property name settled to the parameters directly
-      return JSON.parse(JSON.stringify(constraintParsedPropertyOrGeneric));
+      return constraintParsedPropertyOrGeneric;
     }
 
     const typeName = identifierSymbol?.getName();
@@ -134,6 +134,10 @@ export class TypeReferenceParser extends ParserStrategy {
           passedGenericConstraintsAsParameterToNestedGeneric!.push(
             parsedParameter
           );
+
+          parsedParameter.forEach((property) => {
+            markPropertyAsInternalGeneric(property);
+          });
         }
       });
     }

@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { ParseFunction, ParseOptions } from './ParseFunction';
-import { parsePropertySignature } from './strategies/parsePropertySignature';
+import { parsePropertySignature } from './parsePropertySignature';
 import { CachedParsedProperty } from './types';
 
 export abstract class ParserStrategy {

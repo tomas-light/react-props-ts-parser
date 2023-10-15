@@ -1,5 +1,6 @@
 import { stat } from 'fs/promises';
 import ts from 'typescript';
+import { NotFoundError, SourceFileError } from './errors';
 
 export async function findTsNodeInFile(
   filePath: string,
@@ -14,8 +15,7 @@ export async function findTsNodeInFile(
 > {
   const fileStats = await stat(filePath);
   if (!fileStats.isFile()) {
-    console.error('file not found for path', filePath);
-    return undefined;
+    throw new NotFoundError(`file not found for path (${filePath})`);
   }
 
   const host = ts.createCompilerHost(compilerOptions);
@@ -27,8 +27,9 @@ export async function findTsNodeInFile(
   const sourceFile = program.getSourceFile(filePath);
 
   if (!sourceFile) {
-    console.error('we can not to make SourceFile from a file', filePath);
-    return undefined;
+    throw new SourceFileError(
+      `we can not to make SourceFile from a file (${filePath})`
+    );
   }
 
   const typeChecker = program.getTypeChecker();
@@ -50,8 +51,7 @@ export async function findTsNodeInFile(
   });
 
   if (!tsNode) {
-    console.error(`node with name "${nodeName}" is not found`);
-    return undefined;
+    throw new NotFoundError(`node with name "${nodeName}" is not found`);
   }
 
   return {

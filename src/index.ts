@@ -7,3 +7,4 @@ export * from './findPropertyTsNodeInFile';
 export * from './defined';
 export * from './getTypeReferenceIdentifier';
 export * from './findImports';
+export * from './errors';

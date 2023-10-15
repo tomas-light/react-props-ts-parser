@@ -23,9 +23,10 @@ describe('[class] ReactTypes parser', () => {
         {
           propertyName: 'anchor_attributes',
           import: {
-            type: 'AnchorHTMLAttributes<HTMLAnchorElement>',
+            type: 'AnchorHTMLAttributes',
             moduleName: 'react',
           },
+          nodeText: 'AnchorHTMLAttributes<HTMLAnchorElement>',
           type: 'object',
           // here are just a few properties to be sure type is parsed correctly
           value: [
@@ -44,9 +45,10 @@ describe('[class] ReactTypes parser', () => {
         {
           propertyName: 'anchor_attributes',
           import: {
-            type: 'AnchorHTMLAttributes<HTMLAnchorElement>',
+            type: 'AnchorHTMLAttributes',
             moduleName: 'react',
           },
+          nodeText: 'AnchorHTMLAttributes<HTMLAnchorElement>',
           type: 'object',
           // here are just a few properties to be sure type is parsed correctly
           value: [htmlAttributesParsedProperty],
@@ -59,9 +61,10 @@ describe('[class] ReactTypes parser', () => {
         {
           propertyName: 'input_attributes',
           import: {
-            type: 'InputHTMLAttributes<HTMLInputElement>',
+            type: 'InputHTMLAttributes',
             moduleName: 'react',
           },
+          nodeText: 'InputHTMLAttributes<HTMLInputElement>',
           type: 'object',
           // here are just a few properties to be sure type is parsed correctly
           value: [
@@ -80,9 +83,10 @@ describe('[class] ReactTypes parser', () => {
         {
           propertyName: 'input_attributes',
           import: {
-            type: 'InputHTMLAttributes<HTMLInputElement>',
+            type: 'InputHTMLAttributes',
             moduleName: 'react',
           },
+          nodeText: 'InputHTMLAttributes<HTMLInputElement>',
           type: 'object',
           // here are just a few properties to be sure type is parsed correctly
           value: [htmlAttributesParsedProperty],
@@ -95,9 +99,10 @@ describe('[class] ReactTypes parser', () => {
         {
           propertyName: 'canvas_attributes',
           import: {
-            type: 'CanvasHTMLAttributes<HTMLCanvasElement>',
+            type: 'CanvasHTMLAttributes',
             moduleName: 'react',
           },
+          nodeText: 'CanvasHTMLAttributes<HTMLCanvasElement>',
           type: 'object',
           // here are just a few properties to be sure type is parsed correctly
           value: [
@@ -126,9 +131,10 @@ describe('[class] ReactTypes parser', () => {
         {
           propertyName: 'canvas_attributes',
           import: {
-            type: 'CanvasHTMLAttributes<HTMLCanvasElement>',
+            type: 'CanvasHTMLAttributes',
             moduleName: 'react',
           },
+          nodeText: 'CanvasHTMLAttributes<HTMLCanvasElement>',
           type: 'object',
           // here are just a few properties to be sure type is parsed correctly
           value: [htmlAttributesParsedProperty],
@@ -147,7 +153,7 @@ describe('[class] ReactTypes parser', () => {
           testCompilerOptions
         ))!;
 
-        return parse(propsNode, { typeChecker });
+        return parse(propsNode, { typeChecker, cachedParsedMap: new Map() });
       }
 
       function findProperty(
@@ -171,13 +177,23 @@ describe('[class] ReactTypes parser', () => {
       test('type specific attributes are presented', async () => {
         const result = await parseSuite();
 
-        const [, typeSpecificParsedProperty] = expectedParsedProperties as [
+        const [typeSpecificParsedProperty] = expectedParsedProperties as [
           ParsedObject,
           ParsedObject,
         ];
 
+        const selfProperties = result!.at(-1)!;
+
+        if (selfProperties.type !== 'object') {
+          expect(selfProperties.type).toBe('object');
+          return;
+        }
+
         typeSpecificParsedProperty.value!.forEach((expectedProperty) => {
-          const actualSpecificProperty = findProperty(result, expectedProperty);
+          const actualSpecificProperty = findProperty(
+            selfProperties.value,
+            expectedProperty
+          );
           expect(actualSpecificProperty).toEqual(expectedProperty);
         });
       });
@@ -190,13 +206,23 @@ describe('[class] ReactTypes parser', () => {
           ParsedObject,
         ];
 
+        const selfProperties = result!.at(-1)!;
+
+        if (selfProperties.type !== 'object') {
+          expect(selfProperties.type).toBe('object');
+          return;
+        }
+
         inheritedParsedProperties.value!.forEach((expectedProperty) => {
-          const actualSpecificProperty = findProperty(result, expectedProperty);
+          const actualSpecificProperty = findProperty(
+            selfProperties.value,
+            expectedProperty
+          );
           expect(actualSpecificProperty).toEqual(expectedProperty);
         });
       });
 
-      test('import information is fulfilled', async () => {
+      async function parseAndFindProperty() {
         const result = await parseSuite();
 
         const [anyExpectedProperty] = expectedParsedProperties as [
@@ -220,7 +246,42 @@ describe('[class] ReactTypes parser', () => {
             property.propertyName === anyExpectedProperty.propertyName
         );
 
+        return anyActualProperty;
+      }
+
+      test('type is correct', async () => {
+        const [anyExpectedProperty] = expectedParsedProperties as [
+          ParsedObject,
+          ParsedObject,
+        ];
+
+        const anyActualProperty = await parseAndFindProperty();
+
+        expect(anyActualProperty?.type).toEqual(anyExpectedProperty.type);
+      });
+
+      test('import information is fulfilled', async () => {
+        const [anyExpectedProperty] = expectedParsedProperties as [
+          ParsedObject,
+          ParsedObject,
+        ];
+
+        const anyActualProperty = await parseAndFindProperty();
+
         expect(anyActualProperty?.import).toEqual(anyExpectedProperty.import);
+      });
+
+      test('nodeText is correct', async () => {
+        const [anyExpectedProperty] = expectedParsedProperties as [
+          ParsedObject,
+          ParsedObject,
+        ];
+
+        const anyActualProperty = await parseAndFindProperty();
+
+        expect(anyActualProperty?.nodeText).toEqual(
+          anyExpectedProperty.nodeText
+        );
       });
     }
   );

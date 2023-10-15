@@ -11,17 +11,25 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
 
   type: Type;
   value?: Value;
+  cachedValueRef?: ts.Symbol;
+  /** "Props" / "HTMLAttributes<HTMLDivElement>" */
+  nodeText?: string;
 
   jsDoc?: JsDoc;
 
   /** for types imported from React, DayJs and so on */
   import?: {
-    /** something like "HTMLAttributes<HTMLDivElement>" */
+    /** something like "HTMLAttributes" */
     type?: string;
     /** something like "react", "dayjs" */
     moduleName?: string;
   };
 }
+
+export type CachedParsedProperty = Pick<
+  ParsedProperty,
+  'type' | 'value' | 'cachedValueRef' | 'nodeText' | 'import'
+>;
 
 export type ParsedPropertyOrGeneric = ParsedProperty[] | 'generic';
 export type ParsedGenericConstraintsMap = Map<

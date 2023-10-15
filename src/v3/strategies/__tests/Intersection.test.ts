@@ -80,7 +80,10 @@ describe('[class] Intersection parser', () => {
         testCompilerOptions
       ))!;
 
-      const result = parse(propsNode, { typeChecker });
+      const result = parse(propsNode, {
+        typeChecker,
+        cachedParsedMap: new Map(),
+      });
       const properties = flatProperties(result);
       const targetProperty = properties.find(
         (parsedProperty) => parsedProperty!.propertyName === propertyName
@@ -96,24 +99,72 @@ describe('[class] Intersection parser', () => {
       testCompilerOptions
     ))!;
 
-    const result = parse(propsNode, { typeChecker });
-    expect(result).toEqual([
-      {
-        type: 'object',
-        value: [expected.external_string1![1], expected.external_string2[1]],
-      },
-      {
-        type: 'object',
-        value: [expected.external_boolean1[1], expected.external_boolean2[1]],
-      },
-      {
-        type: 'object',
-        value: [expected.external_number1[1], expected.external_number2[1]],
-      },
-      {
-        type: 'object',
-        value: [expected.props_string1[1], expected.props_string2[1]],
-      },
-    ] satisfies ParsedProperty[]);
+    const result = parse(propsNode, {
+      typeChecker,
+      cachedParsedMap: new Map(),
+    });
+    expect(result).toEqual(expectedResult());
+
+    function expectedResult(): ParsedProperty[] {
+      return [
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              optional: true,
+              propertyName: 'external_string1',
+              type: 'string',
+            },
+            {
+              propertyName: 'external_string2',
+              type: 'string',
+            },
+          ],
+        },
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'external_boolean1',
+              type: 'boolean',
+            },
+            {
+              propertyName: 'external_boolean2',
+              type: 'boolean',
+            },
+          ],
+        },
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'external_number1',
+              type: 'number',
+            },
+            {
+              propertyName: 'external_number2',
+              type: 'number',
+            },
+          ],
+        },
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'props_string1',
+              type: 'string',
+            },
+            {
+              propertyName: 'props_string2',
+              type: 'string',
+            },
+          ],
+        },
+      ];
+    }
   });
 });

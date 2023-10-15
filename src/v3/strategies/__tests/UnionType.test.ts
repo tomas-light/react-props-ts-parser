@@ -142,6 +142,7 @@ describe('[class] UnionType parser', () => {
         type: 'union-type',
         value: [
           {
+            nodeText: 'boolean[]',
             type: 'array',
             value: [
               {
@@ -167,7 +168,10 @@ describe('[class] UnionType parser', () => {
         testCompilerOptions
       ))!;
 
-      const result = parse(propsNode, { typeChecker });
+      const result = parse(propsNode, {
+        typeChecker,
+        cachedParsedMap: new Map(),
+      });
       const properties = flatProperties(result);
       const targetProperty = properties.find(
         (parsedProperty) => parsedProperty!.propertyName === propertyName
@@ -183,53 +187,172 @@ describe('[class] UnionType parser', () => {
       testCompilerOptions
     ))!;
 
-    const result = parse(propsNode, { typeChecker });
-    expect(result).toEqual([
-      {
-        type: 'union-type',
-        value: [
-          {
-            type: 'object',
-            value: [
-              expected.external_optional_string[1],
-              expected.external_string[1],
-            ],
-          },
-          {
-            type: 'union-type',
-            value: [
-              {
-                type: 'object',
-                value: [
-                  expected.external_boolean_or_null[1],
-                  expected.external_boolean_or_symbol[1],
-                ],
-              },
-              {
-                type: 'object',
-                value: [
-                  expected.external_number_or_string[1],
-                  expected.external_number_or_boolean[1],
-                ],
-              },
-            ],
-          },
-          {
-            type: 'object',
-            value: [
-              expected.props_string_literal[1],
-              expected.props_number_literal[1],
-            ],
-          },
-          {
-            type: 'object',
-            value: [
-              expected.props_bigint_literal[1],
-              expected.props_array_or_set[1],
-            ],
-          },
-        ],
-      },
-    ] satisfies ParsedProperty[]);
+    const result = parse(propsNode, {
+      typeChecker,
+      cachedParsedMap: new Map(),
+    });
+    expect(result).toEqual(expectedResult());
+
+    function expectedResult(): ParsedProperty[] {
+      return [
+        {
+          nodeText: 'Props',
+          type: 'union-type',
+          value: [
+            {
+              nodeText: 'ExternalProps',
+              type: 'object',
+              value: [
+                {
+                  optional: true,
+                  propertyName: 'external_optional_string',
+                  type: 'string',
+                },
+                {
+                  propertyName: 'external_string',
+                  type: 'string',
+                },
+              ],
+            },
+            {
+              nodeText: 'ExternalProps2',
+              type: 'union-type',
+              value: [
+                {
+                  nodeText: 'ExternalProps3',
+                  type: 'object',
+                  value: [
+                    {
+                      propertyName: 'external_boolean_or_null',
+                      type: 'union-type',
+                      value: [
+                        {
+                          type: 'boolean',
+                        },
+                        {
+                          type: 'null',
+                        },
+                      ],
+                    },
+                    {
+                      propertyName: 'external_boolean_or_symbol',
+                      type: 'union-type',
+                      value: [
+                        {
+                          type: 'boolean',
+                        },
+                        {
+                          type: 'symbol',
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'object',
+                  value: [
+                    {
+                      propertyName: 'external_number_or_string',
+                      type: 'union-type',
+                      value: [
+                        {
+                          type: 'number',
+                        },
+                        {
+                          type: 'string',
+                        },
+                      ],
+                    },
+                    {
+                      propertyName: 'external_number_or_boolean',
+                      type: 'union-type',
+                      value: [
+                        {
+                          type: 'number',
+                        },
+                        {
+                          type: 'boolean',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'object',
+              value: [
+                {
+                  propertyName: 'props_string_literal',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'string-literal',
+                      value: 'string_1',
+                    },
+                    {
+                      type: 'string-literal',
+                      value: 'string_2',
+                    },
+                  ],
+                },
+                {
+                  propertyName: 'props_number_literal',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'number-literal',
+                      value: 25,
+                    },
+                    {
+                      type: 'number-literal',
+                      value: 50,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'object',
+              value: [
+                {
+                  propertyName: 'props_bigint_literal',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'bigint-literal',
+                      value: 25n,
+                    },
+                    {
+                      type: 'bigint-literal',
+                      value: 100n,
+                    },
+                  ],
+                },
+                {
+                  propertyName: 'props_array_or_set',
+                  type: 'union-type',
+                  value: [
+                    {
+                      nodeText: 'boolean[]',
+                      type: 'array',
+                      value: [
+                        {
+                          type: 'boolean',
+                        },
+                      ],
+                    },
+                    {
+                      type: 'not-parsed',
+                      value: 'Set<string>',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    }
   });
 });

@@ -1,6 +1,7 @@
 import ts from 'typescript';
-import { ParseFunction } from './ParseFunction';
+import { ParseFunction, ParseOptions } from './ParseFunction';
 import { parsePropertySignature } from './strategies/parsePropertySignature';
+import { CachedParsedProperty } from './types';
 
 export abstract class ParserStrategy {
   constructor(protected readonly globalParse: ParseFunction) {}
@@ -19,4 +20,20 @@ export abstract class ParserStrategy {
   };
 
   abstract parsePropertyValue: ParseFunction;
+
+  protected cache(
+    options: ParseOptions,
+    identifierSymbol: ts.Symbol,
+    propertyToCache: CachedParsedProperty
+  ) {
+    const {
+      cachedParsedMap,
+      passedGenericConstraintsAsParameterToNestedGeneric,
+    } = options;
+
+    const cachedProperty = cachedParsedMap.get(identifierSymbol);
+    if (!cachedProperty) {
+      cachedParsedMap.set(identifierSymbol, propertyToCache);
+    }
+  }
 }

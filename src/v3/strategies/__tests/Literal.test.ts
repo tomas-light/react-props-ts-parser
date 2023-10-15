@@ -60,7 +60,10 @@ describe('[class] Literal parser', () => {
         testCompilerOptions
       ))!;
 
-      const result = parse(propsNode, { typeChecker });
+      const result = parse(propsNode, {
+        typeChecker,
+        cachedParsedMap: new Map(),
+      });
       const properties = flatProperties(result);
       const targetProperty = properties.find(
         (parsedProperty) => parsedProperty!.propertyName === propertyName
@@ -76,18 +79,46 @@ describe('[class] Literal parser', () => {
       testCompilerOptions
     ))!;
 
-    const result = parse(propsNode, { typeChecker });
-    expect(result).toEqual([
-      {
-        type: 'object',
-        value: [
-          expected.props_string[1],
-          expected.props_number[1],
-          expected.props_bigint[1],
-          expected.props_true[1],
-          expected.props_false[1],
-        ],
-      },
-    ] satisfies ParsedProperty[]);
+    const result = parse(propsNode, {
+      typeChecker,
+      cachedParsedMap: new Map(),
+    });
+    expect(result).toEqual(expectedResult());
+
+    function expectedResult(): ParsedProperty[] {
+      return [
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'props_string',
+              type: 'string-literal',
+              value: 'string_1',
+            },
+            {
+              propertyName: 'props_number',
+              type: 'number-literal',
+              value: 25,
+            },
+            {
+              propertyName: 'props_bigint',
+              type: 'bigint-literal',
+              value: 100n,
+            },
+            {
+              propertyName: 'props_true',
+              type: 'boolean-literal',
+              value: true,
+            },
+            {
+              propertyName: 'props_false',
+              type: 'boolean-literal',
+              value: false,
+            },
+          ],
+        },
+      ];
+    }
   });
 });

@@ -7,7 +7,7 @@ import { parseGenericParameterConstraints } from './parseGenericParameterConstra
 
 export class TypeAliasParser extends ParserStrategy {
   parsePropertyValue: ParseFunction = (tsNode, options) => {
-    const debugName = tsNode.getFullText();
+    const debugName = tsNode.getFullText().trim();
 
     if (
       !ts.isTypeAliasDeclaration(tsNode) &&
@@ -20,7 +20,7 @@ export class TypeAliasParser extends ParserStrategy {
       return [
         {
           type: 'prevented-from-parsing',
-          value: debugName.trim(),
+          value: debugName,
         },
       ];
     }
@@ -44,32 +44,35 @@ export class TypeAliasParser extends ParserStrategy {
       optionsWithGenericParameters.parsedGenericConstraintsMap!.set(key, value);
     });
 
+    let identifier: ts.Identifier | undefined;
     const parsedProperties: ParsedProperty[] = [];
 
-    tsNode.forEachChild((typeAliasNode) => {
-      const nodeText = typeAliasNode.getFullText();
+    tsNode.forEachChild((node) => {
+      const nodeText = node.getFullText();
 
-      if (typeAliasNode.kind === SyntaxKind.ExportKeyword) {
+      if (node.kind === SyntaxKind.ExportKeyword) {
         return;
       }
-      if (ts.isIdentifier(typeAliasNode)) {
+      if (ts.isIdentifier(node)) {
+        identifier = node;
         return;
       }
       // generic argument already parsed
-      if (ts.isTypeParameterDeclaration(typeAliasNode)) {
+      if (ts.isTypeParameterDeclaration(node)) {
         return;
       }
 
-      const result = this.globalParse(
-        typeAliasNode,
-        optionsWithGenericParameters
-      );
+      const result = this.globalParse(node, optionsWithGenericParameters);
       if (result) {
         parsedProperties.push(...result);
       }
     });
 
     if (parsedProperties.length) {
+      const nodeText = identifier?.getFullText().trim();
+      parsedProperties.forEach((property) => {
+        property.nodeText = nodeText;
+      });
       return parsedProperties;
     }
   };

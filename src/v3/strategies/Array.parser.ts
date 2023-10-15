@@ -26,8 +26,11 @@ export class ArrayParser extends ParserStrategy {
 
   /** @warning use it only after checks on related node type */
   parseArray: ParseFunction = (tsNode, options) => {
+    const debugName = tsNode.getFullText().trim();
+
     const parsedProperty: ParsedArray = {
       type: 'array',
+      nodeText: debugName,
       value: [],
     };
 

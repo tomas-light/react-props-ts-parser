@@ -1,4 +1,3 @@
-import { FC } from 'react';
 import { Dayjs } from 'dayjs';
 import { LocalImportedType } from './LocalImportedType';
 
@@ -8,7 +7,7 @@ type MyTypeA = {
 
 type MyTypeB = 'a' | 'b' | 'c';
 
-type Inherited = {
+type MyTypeC = {
   some: number;
   another?: string;
   prop3: bigint;
@@ -18,9 +17,9 @@ type Inherited = {
 };
 
 export type Props = {
-  props_partial: Partial<Inherited>;
-  props_pick: Pick<Inherited, 'prop3' | 'prop5'>;
-  props_omit: Omit<Inherited, 'some' | 'another' | 'prop3'>;
+  props_partial: Partial<MyTypeC>;
+  props_pick: Pick<MyTypeC, 'prop3' | 'prop5'>;
+  props_omit: Omit<MyTypeC, 'some' | 'another' | 'prop3'>;
   props_set: Set<string>;
   props_map: Map<number, boolean>;
 

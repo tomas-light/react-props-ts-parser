@@ -20,13 +20,14 @@ describe('[demo] Component 1', () => {
     }
 
     const { tsNode, typeChecker } = found;
-    const result = parse(tsNode, { typeChecker });
+    const result = parse(tsNode, { typeChecker, cachedParsedMap: new Map() });
     expect(result).toEqual(expectedResult());
   });
 
   function expectedResult(): ParsedProperty[] {
     return [
       {
+        nodeText: 'Props',
         type: 'object',
         value: [
           {
@@ -37,6 +38,7 @@ describe('[demo] Component 1', () => {
         ],
       },
       {
+        nodeText: 'Props',
         type: 'object',
         value: [
           {
@@ -85,10 +87,12 @@ describe('[demo] Component 1', () => {
             type: 'number',
           },
           {
+            nodeText: "Option<'name' | 'title', number>[]",
             propertyName: 'options',
             type: 'array',
             value: [
               {
+                nodeText: 'Option',
                 type: 'object',
                 value: [
                   {
@@ -118,11 +122,13 @@ describe('[demo] Component 1', () => {
               moduleName: 'react',
               type: 'ReactNode',
             },
+            nodeText: 'ReactNode',
             propertyName: 'children',
             type: 'imported-type',
             value: 'ReactNode',
           },
           {
+            nodeText: 'ReactElement<SomeOtherProps<Id>>[]',
             propertyName: 'someChildren',
             type: 'array',
             value: [
@@ -131,6 +137,7 @@ describe('[demo] Component 1', () => {
                   moduleName: 'react',
                   type: 'ReactElement',
                 },
+                nodeText: 'ReactElement<SomeOtherProps<Id>>',
                 type: 'imported-type',
                 value: 'ReactElement',
               },
@@ -141,12 +148,14 @@ describe('[demo] Component 1', () => {
               moduleName: 'react',
               type: 'CSSProperties',
             },
+            nodeText: 'CSSProperties',
             optional: true,
             propertyName: 'style',
             type: 'imported-type',
             value: 'CSSProperties',
           },
           {
+            nodeText: 'Variant',
             propertyName: 'variant',
             type: 'union-type',
             value: [
@@ -173,6 +182,7 @@ describe('[demo] Component 1', () => {
               moduleName: 'dayjs',
               type: 'Dayjs',
             },
+            nodeText: 'Dayjs',
             propertyName: 'date',
             type: 'imported-type',
             value: 'Dayjs',

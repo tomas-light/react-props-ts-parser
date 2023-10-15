@@ -32,7 +32,10 @@ describe('JsDoc parsing', () => {
         testCompilerOptions
       ))!;
 
-      const result = parse(propsNode, { typeChecker });
+      const result = parse(propsNode, {
+        typeChecker,
+        cachedParsedMap: new Map(),
+      });
       const properties = flatProperties(result);
       const targetProperty = properties.filter(
         (parsedProperty) => parsedProperty!.propertyName === propertyName

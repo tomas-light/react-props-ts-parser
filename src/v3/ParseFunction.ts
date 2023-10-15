@@ -3,10 +3,22 @@ import {
   ParsedPropertyOrGeneric,
   ParsedGenericConstraintsMap,
   ParsedProperty,
+  CachedParsedProperty,
 } from './types';
+
+// MyType => [<type identifier symbol>, [{ type: 'string' }] ]
+// Some<'qwe'> => [<type identifier symbol>, ['qwe', [{ type: 'number' }] ]]
+// HTMLAttributes<HTMLDivElement> => [<type identifier symbol>, ['HTMLDivElement', [<>, [{ type: 'number' }] ]]]
+type SymbolToPropertiesMap = Map<
+  ts.Symbol,
+  // Map<string, ParsedProperty[] | Map<ParsedPropertyOrGeneric, ParsedProperty[]>>
+  CachedParsedProperty
+>;
 
 export type ParseOptions = {
   typeChecker: ts.TypeChecker;
+  cachedParsedMap: SymbolToPropertiesMap;
+
   typeArguments?: ts.NodeArray<ts.TypeNode>;
   /**
    * relation between parsed constraint and its parameter:

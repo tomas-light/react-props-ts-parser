@@ -77,6 +77,7 @@ describe('[class] TypeReference parser for generics', () => {
       'Generic argument Value: "Value[]" is parsed correctly',
       [
         {
+          nodeText: 'Value[]',
           propertyName: 'props_array',
           type: 'array',
           value: [
@@ -92,6 +93,7 @@ describe('[class] TypeReference parser for generics', () => {
       "Generics passed to next generic type: \"Option<Id, 'id_100' | 'id_200'>\" is parsed correctly",
       [
         {
+          nodeText: 'Option',
           propertyName: 'props_option',
           type: 'object',
           value: [
@@ -121,6 +123,7 @@ describe('[class] TypeReference parser for generics', () => {
       'Generics passed to next generic type thet inherits third generic type: "MultiOption<Id, MultiValue>" parsed correctly',
       [
         {
+          nodeText: 'MultiOption',
           propertyName: 'props_multi_option',
           type: 'object',
           value: [
@@ -135,6 +138,7 @@ describe('[class] TypeReference parser for generics', () => {
           ],
         },
         {
+          nodeText: 'MultiOption',
           propertyName: 'props_multi_option',
           type: 'object',
           value: [
@@ -150,6 +154,7 @@ describe('[class] TypeReference parser for generics', () => {
       "Generics passed to next generic with object nexted property as generic: Pick<Custom<{ id: Id }>, 'id' | 'info'> is parsed correctly",
       [
         {
+          nodeText: "Pick<Custom<{ id: Id }>, 'id' | 'info'>",
           propertyName: 'props_custom_object',
           type: 'object',
           value: [
@@ -160,6 +165,7 @@ describe('[class] TypeReference parser for generics', () => {
           ],
         },
         {
+          nodeText: "Pick<Custom<{ id: Id }>, 'id' | 'info'>",
           propertyName: 'props_custom_object',
           type: 'object',
           value: [
@@ -183,7 +189,10 @@ describe('[class] TypeReference parser for generics', () => {
         testCompilerOptions
       ))!;
 
-      const result = parse(propsNode, { typeChecker });
+      const result = parse(propsNode, {
+        typeChecker,
+        cachedParsedMap: new Map(),
+      });
       const properties = flatProperties(result);
       const targetProperty = properties.filter(
         (parsedProperty) => parsedProperty!.propertyName === propertyName
@@ -191,42 +200,193 @@ describe('[class] TypeReference parser for generics', () => {
       expect(targetProperty).toEqual(expectedValue);
     }
   );
-});
 
-// describe('[class] GenericTypeReference parser', () => {
-//   const filePath = path.join(__dirname, 'GenericTypeReference.props.ts');
-//
-//   test('temp', async () => {
-//     const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-//       filePath,
-//       'Props',
-//       testCompilerOptions
-//     ))!;
-//
-//     const result = parse(propsNode, { typeChecker });
-//     const properties = flatProperties(result);
-//     const targetProperty = properties.find(
-//       (parsedProperty) => parsedProperty!.propertyName === 'props_id_constraint'
-//     );
-//     expect(targetProperty).toEqual([
-//       {
-//         type: 'generic-constraint',
-//         value: [
-//           {
-//             type: 'union-type',
-//             value: [
-//               {
-//                 type: 'string-literal',
-//                 value: 'prop_a',
-//               },
-//               {
-//                 type: 'string-literal',
-//                 value: 'prob_b',
-//               },
-//             ],
-//           },
-//         ],
-//       },
-//     ] satisfies ParsedProperty[]);
-//   });
-// });
+  test('full parsed type is parsed correctly', async () => {
+    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
+      filePath,
+      'Props',
+      testCompilerOptions
+    ))!;
+
+    const result = parse(propsNode, {
+      typeChecker,
+      cachedParsedMap: new Map(),
+    });
+    expect(result).toEqual(expectedResult());
+
+    function expectedResult(): ParsedProperty[] {
+      return [
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'variant',
+              type: 'union-type',
+              value: [
+                {
+                  type: 'string-literal',
+                  value: 'a',
+                },
+                {
+                  type: 'string-literal',
+                  value: 'b',
+                },
+              ],
+            },
+          ],
+        },
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'name',
+              type: 'string',
+            },
+          ],
+        },
+        {
+          nodeText: 'Props',
+          type: 'object',
+          value: [
+            {
+              propertyName: 'props_id_constraint',
+              type: 'union-type',
+              value: [
+                {
+                  type: 'string-literal',
+                  value: 'prop_a',
+                },
+                {
+                  type: 'string-literal',
+                  value: 'prop_b',
+                },
+              ],
+            },
+            {
+              propertyName: 'props_value',
+              type: 'generic-constraint',
+              value: 'Value',
+            },
+            {
+              nodeText: 'Value[]',
+              propertyName: 'props_array',
+              type: 'array',
+              value: [
+                {
+                  type: 'generic-constraint',
+                  value: 'Value',
+                },
+              ],
+            },
+            {
+              nodeText: 'Option',
+              propertyName: 'props_option',
+              type: 'object',
+              value: [
+                {
+                  propertyName: 'label',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'string-literal',
+                      value: 'prop_a',
+                    },
+                    {
+                      type: 'string-literal',
+                      value: 'prop_b',
+                    },
+                  ],
+                },
+                {
+                  propertyName: 'value',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'string-literal',
+                      value: 'id_100',
+                    },
+                    {
+                      type: 'string-literal',
+                      value: 'id_200',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              nodeText: 'MultiOption',
+              propertyName: 'props_multi_option',
+              type: 'object',
+              value: [
+                {
+                  propertyName: 'label',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'string-literal',
+                      value: 'prop_a',
+                    },
+                    {
+                      type: 'string-literal',
+                      value: 'prop_b',
+                    },
+                  ],
+                },
+                {
+                  propertyName: 'value',
+                  type: 'bigint',
+                },
+              ],
+            },
+            {
+              nodeText: 'MultiOption',
+              propertyName: 'props_multi_option',
+              type: 'object',
+              value: [
+                {
+                  propertyName: 'multi_value',
+                  type: 'number',
+                },
+              ],
+            },
+            {
+              nodeText: "Pick<Custom<{ id: Id }>, 'id' | 'info'>",
+              propertyName: 'props_custom_object',
+              type: 'object',
+              value: [
+                {
+                  propertyName: 'id',
+                  type: 'union-type',
+                  value: [
+                    {
+                      type: 'string-literal',
+                      value: 'prop_a',
+                    },
+                    {
+                      type: 'string-literal',
+                      value: 'prop_b',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              nodeText: "Pick<Custom<{ id: Id }>, 'id' | 'info'>",
+              propertyName: 'props_custom_object',
+              type: 'object',
+              value: [
+                {
+                  optional: true,
+                  propertyName: 'info',
+                  type: 'string',
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    }
+  });
+});

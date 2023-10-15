@@ -214,7 +214,7 @@ export class TypeReferenceParser extends ParserStrategy {
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
-    const debugName = tsNode.getFullText();
+    const debugName = tsNode.getFullText().trim();
 
     const [typeNode] = tsNode.typeArguments ?? [];
     if (!typeNode) {
@@ -224,6 +224,8 @@ export class TypeReferenceParser extends ParserStrategy {
     const parsedProperties = this.globalParse(typeNode, options);
 
     parsedProperties?.forEach((parsedProperty) => {
+      parsedProperty.nodeText = debugName;
+
       if (parsedProperty.type === 'object' && parsedProperty.value) {
         parsedProperty.value.forEach((partialParsedProperty) => {
           partialParsedProperty.optional = true;
@@ -238,7 +240,7 @@ export class TypeReferenceParser extends ParserStrategy {
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
-    const debugName = tsNode.getFullText();
+    const debugName = tsNode.getFullText().trim();
 
     const [typeNode, pickedNameNode] = tsNode.typeArguments ?? [];
     if (!typeNode || !pickedNameNode) {
@@ -247,14 +249,20 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const parsedProperties = this.globalParse(typeNode, options);
     const picked = new Set(getLiteralValues(pickedNameNode));
-    return pickProperties(parsedProperties, { picked });
+    const properties = pickProperties(parsedProperties, { picked });
+    if (properties) {
+      properties.forEach((property) => {
+        property.nodeText = debugName;
+      });
+    }
+    return properties;
   }
 
   private parseOmittedNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
     options: ParseOptions
   ) {
-    const debugName = tsNode.getFullText();
+    const debugName = tsNode.getFullText().trim();
 
     const [typeNode, omittedNameNode] = tsNode.typeArguments ?? [];
     if (!typeNode || !omittedNameNode) {
@@ -263,7 +271,13 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const parsedProperties = this.globalParse(typeNode, options);
     const omitted = new Set(getLiteralValues(omittedNameNode));
-    return pickProperties(parsedProperties, { omitted });
+    const properties = pickProperties(parsedProperties, { omitted });
+    if (properties) {
+      properties.forEach((property) => {
+        property.nodeText = debugName;
+      });
+    }
+    return properties;
   }
 
   private parseImportedType(
@@ -272,7 +286,7 @@ export class TypeReferenceParser extends ParserStrategy {
     identifier: ts.Identifier,
     identifierSymbol: ts.Symbol
   ): ParsedProperty[] | undefined {
-    const debugName = tsNode.getFullText();
+    const debugName = tsNode.getFullText().trim();
 
     const { typeChecker } = options;
 
@@ -294,40 +308,33 @@ export class TypeReferenceParser extends ParserStrategy {
       )?.getDeclarations();
 
       if (typeDeclarations?.length === 1) {
-        return this.globalParse(typeDeclarations[0], options);
+        const properties = this.globalParse(typeDeclarations[0], options);
+        if (properties) {
+          properties.forEach((property) => {
+            property.nodeText = debugName;
+          });
+        }
+        return properties;
       }
     }
 
     const nodeName = identifierSymbol.getName();
 
+    const importedProperty: ParsedProperty = {
+      type: 'imported-type',
+      import: {
+        type: nodeName,
+        moduleName: importedType.nameFromWhereImportIs,
+      },
+      nodeText: tsNode.getFullText().trim(),
+      value: nodeName,
+    };
+
     if (importedType.nameFromWhereImportIs === 'react') {
       if (['ReactNode', 'ReactElement', 'CSSProperties'].includes(nodeName)) {
-        return [
-          {
-            type: 'imported-type',
-            import: {
-              type: nodeName,
-              moduleName: importedType.nameFromWhereImportIs,
-            },
-            value: nodeName,
-          },
-        ];
+        this.cache(options, identifierSymbol, importedProperty);
+        return [importedProperty];
       }
-
-      // todo: add cache
-      // let cacheOrProperties = options.cachedParsedMap.get(identifierSymbol);
-      // if (cacheOrProperties) {
-      //   if (Array.isArray(cacheOrProperties)) {
-      //     return cacheOrProperties;
-      //   }
-      //
-      //   if (options.passedGenericConstraintsAsParameterToNestedGeneric) {
-      //     tsNode.typeArguments;
-      //   }
-      // } else {
-      //   cacheOrProperties = new Map();
-      //   options.cachedParsedMap.set(identifierSymbol, cacheOrProperties);
-      // }
 
       const tsType = typeChecker.getTypeAtLocation(identifier);
       const typeDeclarations = (
@@ -341,11 +348,10 @@ export class TypeReferenceParser extends ParserStrategy {
         });
 
         if (parsedProperties) {
-          const type = tsNode.getFullText().trim();
-
           parsedProperties.forEach((property) => {
+            property.nodeText = debugName;
             property.import = {
-              type,
+              type: nodeName,
               moduleName: importedType.nameFromWhereImportIs,
             };
           });
@@ -355,16 +361,8 @@ export class TypeReferenceParser extends ParserStrategy {
       }
     }
 
-    return [
-      {
-        type: 'imported-type',
-        import: {
-          type: nodeName,
-          moduleName: importedType.nameFromWhereImportIs,
-        },
-        value: nodeName,
-      },
-    ];
+    this.cache(options, identifierSymbol, importedProperty);
+    return [importedProperty];
   }
 }
 

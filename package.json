@@ -9,7 +9,7 @@
     "url": "https://github.com/TomasLight/react-props-ts-parser/issues"
   },
   "license": "MIT",
-  "packageManager": "yarn@3.6.3",
+  "packageManager": "yarn@4.0.1",
   "scripts": {
     "prepublish": "yarn build",
     "build": "tsc --project tsconfig.build.json",

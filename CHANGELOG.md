@@ -3,6 +3,8 @@
 * added error throwing when file to parse is not found, instead of writing message to console `file not found for path`;
 * added error throwing when target node to parse is not found, instead of writing message to console `node with name "${nodeName}" is not found`;
 * added error throwing when Source file is not typescript, instead of writing message to console `we can not to make SourceFile from a file`;
+* performance and memory optimizations:
+  * added cache to avoid extra attempts to parse the same node (for type references); 
 
 ## Release 3.0.0-rc-2
 

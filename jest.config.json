@@ -2,9 +2,35 @@
   "preset": "ts-jest",
   "testEnvironment": "jsdom",
   "coverageDirectory": "<rootDir>/test-coverage",
-  "coverageReporters": ["json", "html-spa"],
+  "coverageReporters": [
+    "json",
+    "html-spa"
+  ],
   "collectCoverageFrom": [
     "<rootDir>/src/**/*.{ts,tsx}"
   ],
-  "coveragePathIgnorePatterns": ["index.ts", "types.ts"]
+  "coveragePathIgnorePatterns": [
+    "index.ts",
+    "types.ts"
+  ],
+  "transform": {
+    "^.+\\.tsx?$": [
+      "@swc/jest",
+      {
+        "jsc": {
+          "target": "esnext",
+          "parser": {
+            "syntax": "typescript",
+            "tsx": true,
+            "dynamicImports": true
+          },
+          "transform": {
+            "react": {
+              "runtime": "automatic"
+            }
+          }
+        }
+      }
+    ]
+  }
 }

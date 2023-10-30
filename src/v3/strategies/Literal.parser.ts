@@ -1,10 +1,10 @@
 import ts from 'typescript';
-import { ParseFunction } from '../ParseFunction';
+import { InternalParseFunction } from '../ParseFunction';
 import { ParserStrategy } from '../ParserStrategy';
 import { ParsedProperty } from '../types';
 
 export class LiteralParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode) => {
+  parsePropertyValue: InternalParseFunction = (tsNode) => {
     const debugName = tsNode.getFullText();
 
     if (ts.isLiteralTypeNode(tsNode)) {

@@ -1,9 +1,9 @@
 import ts from 'typescript';
-import { ParseFunction } from '../ParseFunction';
+import { InternalParseFunction } from '../ParseFunction';
 import { ParserStrategy } from '../ParserStrategy';
 
 export class PrimitiveParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode) => {
+  parsePropertyValue: InternalParseFunction = (tsNode) => {
     const debugName = tsNode.getFullText();
 
     switch (tsNode.kind) {

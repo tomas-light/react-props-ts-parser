@@ -1,14 +1,16 @@
 import ts from 'typescript';
-import { ParseFunction, ParseOptions } from '../../ParseFunction';
-import { internalSymbol } from '../../symbols';
+import {
+  InternalParseFunction,
+  InternalParseOptions,
+} from '../../ParseFunction';
 import { ParsedGenericConstraintsMap } from '../../types';
 import { findGenericConstraint } from './findGenericConstraint';
 import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
 
 export function parseGenericParameterConstraints(
-  globalParse: ParseFunction,
+  globalParse: InternalParseFunction,
   genericParameterNodes: ts.TypeParameterDeclaration[] | undefined,
-  options: ParseOptions
+  options: InternalParseOptions
 ) {
   const parsedGenericConstraintsMap: ParsedGenericConstraintsMap = new Map();
 

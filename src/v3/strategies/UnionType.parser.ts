@@ -1,10 +1,10 @@
 import ts from 'typescript';
-import { ParseFunction } from '../ParseFunction';
+import { InternalParseFunction } from '../ParseFunction';
 import { ParserStrategy } from '../ParserStrategy';
 import { ParsedUnionType } from '../types';
 
 export class UnionTypeParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode, options) => {
+  parsePropertyValue: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
 
     if (!ts.isUnionTypeNode(tsNode)) {

@@ -1,5 +1,4 @@
-import { ParseFunction } from './ParseFunction';
-import { ParserStrategy } from './ParserStrategy';
+import { InternalParseFunction, ParseFunction } from './ParseFunction';
 import { ArrayParser } from './strategies/Array.parser';
 import { IntersectionParser } from './strategies/Intersection.parser';
 import { LiteralParser } from './strategies/Literal.parser';
@@ -9,8 +8,9 @@ import { InterfaceParser } from './strategies/TypeReference/Interface.parser';
 import { TypeAliasParser } from './strategies/TypeReference/TypeAlias.parser';
 import { TypeReferenceParser } from './strategies/TypeReference/TypeReference.parser';
 import { UnionTypeParser } from './strategies/UnionType.parser';
+import { ParsedProperty } from './types';
 
-const strategies: (new (globalParse: ParseFunction) => ParserStrategy)[] = [
+const strategies = [
   //
   InterfaceParser,
   TypeAliasParser,
@@ -21,15 +21,27 @@ const strategies: (new (globalParse: ParseFunction) => ParserStrategy)[] = [
   LiteralParser,
   ArrayParser,
   UnionTypeParser,
-];
+] as const;
 
-export const parse: ParseFunction = (...args) => {
-  const [tsNode] = args;
+export const parse: ParseFunction = (
+  tsNode,
+  options
+): ParsedProperty[] | undefined => {
+  return parseInternal(tsNode, {
+    ...options,
+    cachedParsedMap: options.cachedParsedMap ?? new Map(),
+  });
+};
+
+export const parseInternal: InternalParseFunction = (
+  tsNode,
+  options
+): ParsedProperty[] | undefined => {
   const debugName = tsNode.getFullText();
 
   for (const parserConstructor of strategies) {
-    const parser = new parserConstructor(parse);
-    const result = parser.parse(...args);
+    const parser = new parserConstructor(parseInternal);
+    const result = parser.parse(tsNode, options);
     if (result) {
       return result;
     }

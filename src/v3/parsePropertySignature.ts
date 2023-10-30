@@ -1,12 +1,12 @@
 import ts from 'typescript';
-import { ParseFunction } from './ParseFunction';
+import { InternalParseFunction } from './ParseFunction';
+import { parseJsDoc } from './strategies/parseJsDoc';
 import { internalSymbol } from './symbols';
 import { ParsedProperty } from './types';
-import { parseJsDoc } from './strategies/parseJsDoc';
 
 export function parsePropertySignature(
-  parse: ParseFunction,
-  ...args: Parameters<ParseFunction>
+  parse: InternalParseFunction,
+  ...args: Parameters<InternalParseFunction>
 ) {
   const [tsNode, options, ...restArgs] = args;
   const debugName = tsNode.getFullText();
@@ -67,23 +67,32 @@ export function parsePropertySignature(
   // passed generics may be used at several places,
   // we have copy top level to be able to set different propertyNames and so on
   parsedProperties = parsedProperties.map((property) => {
-    if (property[internalSymbol]?.isGenericArgument) {
-      const copy: ParsedProperty = {
-        ...property,
-        [internalSymbol]: {
-          ...property[internalSymbol],
-        },
-      };
-      delete copy[internalSymbol]!.isGenericArgument;
-
-      if (Object.keys(copy[internalSymbol]!).length === 0) {
-        delete copy[internalSymbol];
-      }
-
-      return copy;
+    if (!property[internalSymbol]) {
+      return property;
     }
 
-    return property;
+    const { isCached, isGenericArgument } = property[internalSymbol];
+
+    const copy: ParsedProperty = {
+      ...property,
+      [internalSymbol]: {
+        ...property[internalSymbol],
+      },
+    };
+
+    if (isGenericArgument) {
+      delete copy[internalSymbol]!.isGenericArgument;
+    }
+
+    if (isCached) {
+      delete copy[internalSymbol]!.isCached;
+    }
+
+    if (Object.keys(copy[internalSymbol]!).length === 0) {
+      delete copy[internalSymbol];
+    }
+
+    return copy;
   });
 
   parsedProperties.forEach((property) => {

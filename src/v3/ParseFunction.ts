@@ -1,21 +1,21 @@
 import ts from 'typescript';
 import {
-  ParsedPropertyOrGeneric,
+  CachedParsedProperty,
   ParsedGenericConstraintsMap,
   ParsedProperty,
-  CachedParsedProperty,
+  ParsedPropertyOrGeneric,
 } from './types';
 
 // MyType => [<type identifier symbol>, [{ type: 'string' }] ]
 // Some<'qwe'> => [<type identifier symbol>, ['qwe', [{ type: 'number' }] ]]
 // HTMLAttributes<HTMLDivElement> => [<type identifier symbol>, ['HTMLDivElement', [<>, [{ type: 'number' }] ]]]
 type SymbolToPropertiesMap = Map<
-  ts.Symbol,
+  ts.Symbol | undefined,
   // Map<string, ParsedProperty[] | Map<ParsedPropertyOrGeneric, ParsedProperty[]>>
   CachedParsedProperty
 >;
 
-export type ParseOptions = {
+export type InternalParseOptions = {
   typeChecker: ts.TypeChecker;
   cachedParsedMap: SymbolToPropertiesMap;
 
@@ -42,6 +42,17 @@ export type ParseOptions = {
    * */
   skipTypeAliasAndInterfaces?: boolean;
 };
+
+export type ParseOptions = Partial<
+  Omit<InternalParseOptions, 'nodeIdToArgumentKeyMap'>
+> & {
+  typeChecker: ts.TypeChecker;
+};
+
+export type InternalParseFunction = (
+  tsNode: ts.Node,
+  options: InternalParseOptions
+) => ParsedProperty[] | undefined;
 
 export type ParseFunction = (
   tsNode: ts.Node,

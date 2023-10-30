@@ -1,10 +1,10 @@
 import ts from 'typescript';
-import { ParseFunction } from '../ParseFunction';
+import { InternalParseFunction } from '../ParseFunction';
 import { ParserStrategy } from '../ParserStrategy';
 import { ParsedArray } from '../types';
 
 export class ArrayParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode, options) => {
+  parsePropertyValue: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
 
     if (ts.isArrayTypeNode(tsNode)) {
@@ -25,7 +25,7 @@ export class ArrayParser extends ParserStrategy {
   };
 
   /** @warning use it only after checks on related node type */
-  parseArray: ParseFunction = (tsNode, options) => {
+  parseArray: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText().trim();
 
     const parsedProperty: ParsedArray = {

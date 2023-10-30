@@ -3,12 +3,15 @@ import { defined } from '../../../defined';
 import { findImports } from '../../../findImports';
 import { getTypeReferenceIdentifier } from '../../../getTypeReferenceIdentifier';
 import { getLiteralValues } from '../../../utils/getLiteralValues';
-import { ParseFunction, ParseOptions } from '../../ParseFunction';
+import {
+  InternalParseFunction,
+  InternalParseOptions,
+} from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
 import {
-  ParsedPropertyOrGeneric,
   ParsedObject,
   ParsedProperty,
+  ParsedPropertyOrGeneric,
 } from '../../types';
 import { ArrayParser } from '../Array.parser';
 import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
@@ -16,7 +19,7 @@ import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
 export const UNKNOWN_IDENTIFIER_TEXT = 'unknown_identifier';
 
 export class TypeReferenceParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode, options) => {
+  parsePropertyValue: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
 
     if (
@@ -142,7 +145,7 @@ export class TypeReferenceParser extends ParserStrategy {
       });
     }
 
-    const nestedOptions: ParseOptions = {
+    const nestedOptions: InternalParseOptions = {
       ...options,
       passedGenericConstraintsAsParameterToNestedGeneric,
     };
@@ -202,7 +205,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
   private parseNodeAsArray(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: ParseOptions
+    options: InternalParseOptions
   ) {
     const debugName = tsNode.getFullText();
 
@@ -216,7 +219,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
   private parsePartialNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: ParseOptions
+    options: InternalParseOptions
   ) {
     const debugName = tsNode.getFullText().trim();
 
@@ -242,7 +245,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
   private parsePickedNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: ParseOptions
+    options: InternalParseOptions
   ) {
     const debugName = tsNode.getFullText().trim();
 
@@ -264,7 +267,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
   private parseOmittedNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: ParseOptions
+    options: InternalParseOptions
   ) {
     const debugName = tsNode.getFullText().trim();
 
@@ -286,7 +289,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
   private parseImportedType(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: ParseOptions,
+    options: InternalParseOptions,
     identifier: ts.Identifier,
     identifierSymbol: ts.Symbol
   ): ParsedProperty[] | undefined {
@@ -336,7 +339,11 @@ export class TypeReferenceParser extends ParserStrategy {
 
     if (importedType.nameFromWhereImportIs === 'react') {
       if (['ReactNode', 'ReactElement', 'CSSProperties'].includes(nodeName)) {
-        this.cache(options, identifierSymbol, importedProperty);
+        this.cache({
+          options,
+          identifierSymbol,
+          propertyToCache: importedProperty,
+        });
         return [importedProperty];
       }
 
@@ -365,7 +372,11 @@ export class TypeReferenceParser extends ParserStrategy {
       }
     }
 
-    this.cache(options, identifierSymbol, importedProperty);
+    this.cache({
+      options,
+      identifierSymbol,
+      propertyToCache: importedProperty,
+    });
     return [importedProperty];
   }
 }

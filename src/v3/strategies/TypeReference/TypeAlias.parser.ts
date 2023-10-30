@@ -1,12 +1,15 @@
 import ts, { SyntaxKind } from 'typescript';
-import { ParseFunction, ParseOptions } from '../../ParseFunction';
+import {
+  InternalParseFunction,
+  InternalParseOptions,
+} from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
 import { ParsedProperty } from '../../types';
 import { findGenericParameterNodes } from './findGenericParameterNodes';
 import { parseGenericParameterConstraints } from './parseGenericParameterConstraints';
 
 export class TypeAliasParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode, options) => {
+  parsePropertyValue: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText().trim();
 
     if (
@@ -33,7 +36,7 @@ export class TypeAliasParser extends ParserStrategy {
       options
     );
 
-    const optionsWithGenericParameters: ParseOptions = {
+    const optionsWithGenericParameters: InternalParseOptions = {
       ...options,
       parsedGenericConstraintsMap: new Map(),
     };

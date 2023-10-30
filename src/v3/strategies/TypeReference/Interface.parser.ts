@@ -1,12 +1,15 @@
 import ts, { SyntaxKind } from 'typescript';
-import { ParseFunction, ParseOptions } from '../../ParseFunction';
+import {
+  InternalParseFunction,
+  InternalParseOptions,
+} from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
 import { ParsedObject, ParsedProperty } from '../../types';
 import { findGenericParameterNodes } from './findGenericParameterNodes';
 import { parseGenericParameterConstraints } from './parseGenericParameterConstraints';
 
 export class InterfaceParser extends ParserStrategy {
-  parsePropertyValue: ParseFunction = (tsNode, options) => {
+  parsePropertyValue: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
 
     if (!ts.isInterfaceDeclaration(tsNode)) {
@@ -21,7 +24,7 @@ export class InterfaceParser extends ParserStrategy {
       options
     );
 
-    const optionsWithGenericParameters: ParseOptions = {
+    const optionsWithGenericParameters: InternalParseOptions = {
       ...options,
       parsedGenericConstraintsMap: new Map(),
     };

@@ -18,6 +18,7 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
 
   [internalSymbol]?: {
     isGenericArgument?: boolean;
+    isCached?: boolean;
   };
 
   jsDoc?: JsDoc;

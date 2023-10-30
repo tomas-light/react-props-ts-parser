@@ -17,7 +17,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_string');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -31,7 +31,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_number');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -45,7 +45,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_boolean');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -59,7 +59,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_null');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -73,7 +73,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_undefined');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -88,7 +88,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_bigint');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -102,7 +102,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_symbol');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -116,7 +116,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_function');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -130,7 +130,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_any');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -144,7 +144,7 @@ describe('[class] Primitive parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode('props_unknown');
     const result = primitive.parse(tsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual([
       {
@@ -163,7 +163,7 @@ describe('[class] Primitive parser', () => {
 
     const result = parse(propsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual(expectedResult());
 

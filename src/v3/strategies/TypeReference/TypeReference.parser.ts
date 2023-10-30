@@ -1,7 +1,10 @@
 import ts, { SyntaxKind } from 'typescript';
 import { defined } from '../../../defined';
 import { findImports } from '../../../findImports';
-import { getTypeReferenceIdentifier } from '../../../getTypeReferenceIdentifier';
+import {
+  getTypeReferenceIdentifier,
+  getTypeReferenceIdentifierSymbol,
+} from '../../../getTypeReferenceIdentifier';
 import { getLiteralValues } from '../../../utils/getLiteralValues';
 import {
   InternalParseFunction,
@@ -9,6 +12,7 @@ import {
 } from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
 import {
+  ParsedImportedType,
   ParsedObject,
   ParsedProperty,
   ParsedPropertyOrGeneric,
@@ -35,6 +39,20 @@ export class TypeReferenceParser extends ParserStrategy {
     let identifierSymbol: ts.Symbol | undefined;
     if (identifier) {
       identifierSymbol = typeChecker.getSymbolAtLocation(identifier);
+    }
+
+    const argumentsIdentifierSymbols = this.findArgumentSymbols(
+      tsNode,
+      options
+    );
+
+    const cached = this.findInCache({
+      identifierSymbol,
+      options,
+      argumentsIdentifierSymbols,
+    });
+    if (cached) {
+      return cached;
     }
 
     // find parsed generic constraint
@@ -76,15 +94,15 @@ export class TypeReferenceParser extends ParserStrategy {
       }
 
       if (typeName === 'Partial') {
-        return this.parsePartialNode(tsNode, options);
+        return this.parsePartialNode(tsNode, options, identifierSymbol!);
       }
 
       if (typeName === 'Pick') {
-        return this.parsePickedNode(tsNode, options);
+        return this.parsePickedNode(tsNode, options, identifierSymbol!);
       }
 
       if (typeName === 'Omit') {
-        return this.parseOmittedNode(tsNode, options);
+        return this.parseOmittedNode(tsNode, options, identifierSymbol!);
       }
     }
 
@@ -185,6 +203,11 @@ export class TypeReferenceParser extends ParserStrategy {
     });
 
     if (parsedProperties.length) {
+      this.cacheArray({
+        identifierSymbol,
+        options,
+        propertiesToCache: parsedProperties,
+      });
       return parsedProperties;
     }
   };
@@ -219,7 +242,8 @@ export class TypeReferenceParser extends ParserStrategy {
 
   private parsePartialNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: InternalParseOptions
+    options: InternalParseOptions,
+    nodeIdentifierSymbol: ts.Symbol
   ) {
     const debugName = tsNode.getFullText().trim();
 
@@ -240,12 +264,41 @@ export class TypeReferenceParser extends ParserStrategy {
       }
     });
 
+    if (parsedProperties) {
+      const argumentsIdentifierSymbols = this.findArgumentSymbols(
+        tsNode,
+        options
+      );
+
+      this.cacheArray({
+        identifierSymbol: nodeIdentifierSymbol,
+        options,
+        argumentsIdentifierSymbols: argumentsIdentifierSymbols,
+        propertiesToCache: parsedProperties,
+      });
+    }
+
     return parsedProperties;
+  }
+
+  private findArgumentSymbols(
+    tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
+    options: InternalParseOptions
+  ) {
+    return tsNode.typeArguments
+      ?.map((node) =>
+        getTypeReferenceIdentifierSymbol(
+          node as ts.TypeReferenceNode,
+          options.typeChecker
+        )
+      )
+      .filter(defined);
   }
 
   private parsePickedNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: InternalParseOptions
+    options: InternalParseOptions,
+    nodeIdentifierSymbol: ts.Symbol
   ) {
     const debugName = tsNode.getFullText().trim();
 
@@ -262,12 +315,28 @@ export class TypeReferenceParser extends ParserStrategy {
         property.nodeText = debugName;
       });
     }
+
+    if (properties) {
+      const argumentsIdentifierSymbols = this.findArgumentSymbols(
+        tsNode,
+        options
+      );
+
+      this.cacheArray({
+        identifierSymbol: nodeIdentifierSymbol,
+        options,
+        argumentsIdentifierSymbols,
+        propertiesToCache: properties,
+      });
+    }
+
     return properties;
   }
 
   private parseOmittedNode(
     tsNode: ts.TypeReferenceNode | ts.ExpressionWithTypeArguments,
-    options: InternalParseOptions
+    options: InternalParseOptions,
+    nodeIdentifierSymbol: ts.Symbol
   ) {
     const debugName = tsNode.getFullText().trim();
 
@@ -284,6 +353,21 @@ export class TypeReferenceParser extends ParserStrategy {
         property.nodeText = debugName;
       });
     }
+
+    if (properties) {
+      const argumentsIdentifierSymbols = this.findArgumentSymbols(
+        tsNode,
+        options
+      );
+
+      this.cacheArray({
+        identifierSymbol: nodeIdentifierSymbol,
+        options,
+        argumentsIdentifierSymbols,
+        propertiesToCache: properties,
+      });
+    }
+
     return properties;
   }
 
@@ -327,7 +411,7 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const nodeName = identifierSymbol.getName();
 
-    const importedProperty: ParsedProperty = {
+    const importedProperty: ParsedImportedType = {
       type: 'imported-type',
       import: {
         type: nodeName,

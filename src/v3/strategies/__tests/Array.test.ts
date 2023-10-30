@@ -12,7 +12,7 @@ describe('[class] Array parser', () => {
 
   test('arrayNode property is parsed correctly', async () => {
     const { tsNode, typeChecker } = await _getPropertyNode('arrayNode');
-    const result = parse(tsNode, { typeChecker, cachedParsedMap: new Map() });
+    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
     expect(result).toEqual([
       {
         propertyName: 'arrayNode',
@@ -29,7 +29,7 @@ describe('[class] Array parser', () => {
 
   test('readonlyArrayNode property is parsed correctly', async () => {
     const { tsNode, typeChecker } = await _getPropertyNode('readonlyArrayNode');
-    const result = parse(tsNode, { typeChecker, cachedParsedMap: new Map() });
+    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
     expect(result).toEqual([
       {
         propertyName: 'readonlyArrayNode',
@@ -47,7 +47,7 @@ describe('[class] Array parser', () => {
   test('arrayReferenceNode property is parsed correctly', async () => {
     const { tsNode, typeChecker } =
       await _getPropertyNode('arrayReferenceNode');
-    const result = parse(tsNode, { typeChecker, cachedParsedMap: new Map() });
+    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
     expect(result).toEqual([
       {
         propertyName: 'arrayReferenceNode',
@@ -66,7 +66,7 @@ describe('[class] Array parser', () => {
     const { tsNode, typeChecker } = await _getPropertyNode(
       'readonlyArrayReferenceNode'
     );
-    const result = parse(tsNode, { typeChecker, cachedParsedMap: new Map() });
+    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
     expect(result).toEqual([
       {
         propertyName: 'readonlyArrayReferenceNode',
@@ -90,7 +90,7 @@ describe('[class] Array parser', () => {
 
     const result = parse(propsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual(expectedResult());
 

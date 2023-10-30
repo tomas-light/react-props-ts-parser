@@ -20,7 +20,7 @@ describe('[demo] Component 1', () => {
     }
 
     const { tsNode, typeChecker } = found;
-    const result = parse(tsNode, { typeChecker, cachedParsedMap: new Map() });
+    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
     expect(result).toEqual(expectedResult());
   });
 

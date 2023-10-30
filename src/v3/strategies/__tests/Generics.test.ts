@@ -191,7 +191,7 @@ describe('[class] TypeReference parser for generics', () => {
 
       const result = parse(propsNode, {
         typeChecker,
-        cachedParsedMap: new Map(),
+        nodeCacheMap: new Map(),
       });
       const properties = flatProperties(result);
       const targetProperty = properties.filter(
@@ -210,7 +210,7 @@ describe('[class] TypeReference parser for generics', () => {
 
     const result = parse(propsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual(expectedResult());
 

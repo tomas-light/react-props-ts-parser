@@ -153,7 +153,7 @@ describe('[class] ReactTypes parser', () => {
           testCompilerOptions
         ))!;
 
-        return parse(propsNode, { typeChecker, cachedParsedMap: new Map() });
+        return parse(propsNode, { typeChecker, nodeCacheMap: new Map() });
       }
 
       function findProperty(

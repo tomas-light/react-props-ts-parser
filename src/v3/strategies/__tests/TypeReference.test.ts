@@ -243,7 +243,7 @@ describe('[class] TypeReference parser', () => {
 
       const result = parse(propsNode, {
         typeChecker,
-        cachedParsedMap: new Map(),
+        nodeCacheMap: new Map(),
       });
       const properties = flatProperties(result);
       const targetProperty = properties.find(
@@ -262,7 +262,7 @@ describe('[class] TypeReference parser', () => {
 
     const result = parse(propsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual(expectedResult());
 

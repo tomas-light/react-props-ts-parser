@@ -1,8 +1,9 @@
 import ts from 'typescript';
+import { defined } from '../defined';
 import { InternalParseFunction, InternalParseOptions } from './ParseFunction';
 import { parsePropertySignature } from './parsePropertySignature';
 import { internalSymbol } from './symbols';
-import { ParsedProperty } from './types';
+import { Cached, NodeId, ParsedProperty } from './types';
 
 export abstract class ParserStrategy {
   constructor(protected readonly globalParse: InternalParseFunction) {}
@@ -25,67 +26,107 @@ export abstract class ParserStrategy {
   protected cacheArray(config: {
     options: InternalParseOptions;
     identifierSymbol: ts.Symbol | undefined;
-    propertyToCache: ParsedProperty[] | undefined;
+    argumentsIdentifierSymbols?: ts.Symbol[];
+    propertiesToCache: ParsedProperty[] | undefined;
   }) {
-    const { identifierSymbol, options, propertyToCache } = config;
+    const {
+      identifierSymbol,
+      argumentsIdentifierSymbols,
+      options,
+      propertiesToCache,
+    } = config;
 
-    if (!propertyToCache) {
+    if (!propertiesToCache) {
       return undefined;
     }
 
-    if (propertyToCache.length === 1) {
-      const [singleProperty] = propertyToCache;
-      return [
+    return propertiesToCache
+      .map((property) =>
         this.cache({
-          options,
           identifierSymbol,
-          propertyToCache: singleProperty,
-        }),
-      ];
-    }
-
-    // how to bind many properties to single identifier ?
-    console.warn('cannot cache array');
-    return propertyToCache;
+          argumentsIdentifierSymbols,
+          options,
+          propertyToCache: property,
+        })
+      )
+      .filter(defined);
   }
 
-  protected cache<T extends ParsedProperty>(config: {
-    options: InternalParseOptions;
+  protected cache(config: {
     identifierSymbol: ts.Symbol | undefined;
-    propertyToCache: T;
-  }): T {
-    const { identifierSymbol, options, propertyToCache } = config;
-
+    argumentsIdentifierSymbols?: ts.Symbol[];
+    options: InternalParseOptions;
+    propertyToCache: ParsedProperty;
+  }): ParsedProperty {
     const {
-      cachedParsedMap,
-      passedGenericConstraintsAsParameterToNestedGeneric,
-    } = options;
+      identifierSymbol,
+      argumentsIdentifierSymbols,
+      options,
+      propertyToCache,
+    } = config;
+
+    const { nodeCacheMap, passedGenericConstraintsAsParameterToNestedGeneric } =
+      options;
 
     if (!identifierSymbol) {
       return propertyToCache;
     }
-
-    const cachedProperty = cachedParsedMap.get(identifierSymbol);
-    if (!cachedProperty) {
-      cachedParsedMap.set(identifierSymbol, propertyToCache);
-
-      if (!propertyToCache[internalSymbol]) {
-        propertyToCache[internalSymbol] = {};
-      }
-      propertyToCache[internalSymbol].isCached = true;
+    const cached: Cached = {
+      cached: [propertyToCache],
+    };
+    if (argumentsIdentifierSymbols) {
+      cached.argumentsSet = new Set(argumentsIdentifierSymbols);
     }
 
-    return propertyToCache;
+    let cachedProperty = nodeCacheMap.get(identifierSymbol);
+    if (!cachedProperty) {
+      cachedProperty = [cached];
+      nodeCacheMap.set(identifierSymbol, cachedProperty);
+    } else {
+      cachedProperty.push(cached);
+    }
+
+    if (!propertyToCache[internalSymbol]) {
+      propertyToCache[internalSymbol] = {};
+    }
+    propertyToCache[internalSymbol].isCached = true;
+
+    return this.copyCachedProperty(propertyToCache);
   }
 
-  protected getFromCache(
-    options: InternalParseOptions,
-    identifierSymbol: ts.Symbol | undefined
-  ) {
-    const cachedProperty = options.cachedParsedMap.get(identifierSymbol);
-    if (cachedProperty) {
-      // copy to prevents "propertyName" and "nodeText" collisions between different using
-      return [{ ...cachedProperty } as ParsedProperty];
+  protected findInCache(config: {
+    identifierSymbol: NodeId | undefined;
+    argumentsIdentifierSymbols?: NodeId[];
+    options: InternalParseOptions;
+  }) {
+    const { identifierSymbol, argumentsIdentifierSymbols, options } = config;
+
+    const cached = options.nodeCacheMap.get(identifierSymbol);
+    if (!cached) {
+      return undefined;
     }
+
+    if (!argumentsIdentifierSymbols?.length) {
+      return this.copyCached(cached);
+    }
+
+    const filtered = cached.filter(
+      (cache) =>
+        argumentsIdentifierSymbols.length === cache.argumentsSet?.size &&
+        argumentsIdentifierSymbols.every(
+          (symbol) => cache.argumentsSet?.has(symbol)
+        )
+    );
+
+    return this.copyCached(filtered);
+  }
+
+  private copyCached(cached: Cached[]): ParsedProperty[] {
+    return cached.flatMap((cache) => cache.cached.map(this.copyCachedProperty));
+  }
+
+  private copyCachedProperty(property: ParsedProperty): ParsedProperty {
+    // copy to prevents "propertyName" and "nodeText" collisions between different using
+    return { ...property };
   }
 }

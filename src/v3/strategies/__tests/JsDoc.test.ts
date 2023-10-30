@@ -34,7 +34,7 @@ describe('JsDoc parsing', () => {
 
       const result = parse(propsNode, {
         typeChecker,
-        cachedParsedMap: new Map(),
+        nodeCacheMap: new Map(),
       });
       const properties = flatProperties(result);
       const targetProperty = properties.filter(

@@ -29,7 +29,7 @@ export const parse: ParseFunction = (
 ): ParsedProperty[] | undefined => {
   return parseInternal(tsNode, {
     ...options,
-    cachedParsedMap: options.cachedParsedMap ?? new Map(),
+    nodeCacheMap: options.nodeCacheMap ?? new Map(),
   });
 };
 

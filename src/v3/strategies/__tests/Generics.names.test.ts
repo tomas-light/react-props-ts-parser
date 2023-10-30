@@ -16,7 +16,7 @@ describe('[class] TypeReference parser for generics (names version)', () => {
 
     const result = parse(propsNode, {
       typeChecker,
-      cachedParsedMap: new Map(),
+      nodeCacheMap: new Map(),
     });
     expect(result).toEqual(expectedResult());
 

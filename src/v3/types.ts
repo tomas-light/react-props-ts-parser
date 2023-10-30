@@ -32,10 +32,22 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
   };
 }
 
-export type CachedParsedProperty = Pick<
-  ParsedProperty,
-  'type' | 'value' | 'cachedValueRef' | 'nodeText' | 'import'
+export type NodeId = ts.Symbol;
+export type NodeIdOrText = ts.Symbol | string;
+
+// MyType => [<type identifier symbol>, [{ type: 'string' }] ]
+// Some<'qwe'> => [<type identifier symbol>, [{ type: 'number' }] ]
+// HTMLAttributes<HTMLDivElement> => [<type identifier symbol>, [{ cached: [{ type: 'object' }] }] ]
+export type NodeCacheMap = Map<
+  NodeId | undefined, // symbol of identifier
+  // generics may have several parsed results: MyType<string> / MyType<number> / MyType<string, number>
+  Cached[]
 >;
+
+export type Cached = {
+  argumentsSet?: Set<NodeId>;
+  cached: ParsedProperty[];
+};
 
 export type ParsedPropertyOrGeneric = ParsedProperty[] | 'generic';
 export type ParsedGenericConstraintsMap = Map<

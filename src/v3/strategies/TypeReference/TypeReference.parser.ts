@@ -252,17 +252,7 @@ export class TypeReferenceParser extends ParserStrategy {
       return;
     }
 
-    const parsedProperties = this.globalParse(typeNode, options);
-
-    parsedProperties?.forEach((parsedProperty) => {
-      parsedProperty.nodeText = debugName;
-
-      if (parsedProperty.type === 'object' && parsedProperty.value) {
-        parsedProperty.value.forEach((partialParsedProperty) => {
-          partialParsedProperty.optional = true;
-        });
-      }
-    });
+    let parsedProperties = this.globalParse(typeNode, options);
 
     if (parsedProperties) {
       const argumentsIdentifierSymbols = this.findArgumentSymbols(
@@ -270,11 +260,26 @@ export class TypeReferenceParser extends ParserStrategy {
         options
       );
 
-      this.cacheArray({
+      parsedProperties = this.cacheArray({
         identifierSymbol: nodeIdentifierSymbol,
         options,
         argumentsIdentifierSymbols: argumentsIdentifierSymbols,
         propertiesToCache: parsedProperties,
+      });
+
+      parsedProperties?.forEach((parsedProperty) => {
+        parsedProperty.nodeText = debugName;
+
+        if (parsedProperty.type === 'object' && parsedProperty.value) {
+          parsedProperty.value = parsedProperty.value.map(
+            (partialParsedProperty) => {
+              return {
+                ...partialParsedProperty,
+                optional: true,
+              };
+            }
+          );
+        }
       });
     }
 
@@ -286,11 +291,12 @@ export class TypeReferenceParser extends ParserStrategy {
     options: InternalParseOptions
   ) {
     return tsNode.typeArguments
-      ?.map((node) =>
-        getTypeReferenceIdentifierSymbol(
-          node as ts.TypeReferenceNode,
-          options.typeChecker
-        )
+      ?.map(
+        (node) =>
+          getTypeReferenceIdentifierSymbol(
+            node as ts.TypeReferenceNode,
+            options.typeChecker
+          ) ?? node.getFullText()
       )
       .filter(defined);
   }
@@ -307,26 +313,26 @@ export class TypeReferenceParser extends ParserStrategy {
       return;
     }
 
-    const parsedProperties = this.globalParse(typeNode, options);
-    const picked = new Set(getLiteralValues(pickedNameNode));
-    const properties = pickProperties(parsedProperties, { picked });
-    if (properties) {
-      properties.forEach((property) => {
-        property.nodeText = debugName;
-      });
-    }
-
-    if (properties) {
+    let parsedProperties = this.globalParse(typeNode, options);
+    if (parsedProperties) {
       const argumentsIdentifierSymbols = this.findArgumentSymbols(
         tsNode,
         options
       );
 
-      this.cacheArray({
+      parsedProperties = this.cacheArray({
         identifierSymbol: nodeIdentifierSymbol,
         options,
         argumentsIdentifierSymbols,
-        propertiesToCache: properties,
+        propertiesToCache: parsedProperties,
+      });
+    }
+
+    const picked = new Set(getLiteralValues(pickedNameNode));
+    const properties = pickProperties(parsedProperties, { picked });
+    if (properties) {
+      properties.forEach((property) => {
+        property.nodeText = debugName;
       });
     }
 
@@ -345,26 +351,26 @@ export class TypeReferenceParser extends ParserStrategy {
       return;
     }
 
-    const parsedProperties = this.globalParse(typeNode, options);
-    const omitted = new Set(getLiteralValues(omittedNameNode));
-    const properties = pickProperties(parsedProperties, { omitted });
-    if (properties) {
-      properties.forEach((property) => {
-        property.nodeText = debugName;
-      });
-    }
-
-    if (properties) {
+    let parsedProperties = this.globalParse(typeNode, options);
+    if (parsedProperties) {
       const argumentsIdentifierSymbols = this.findArgumentSymbols(
         tsNode,
         options
       );
 
-      this.cacheArray({
+      parsedProperties = this.cacheArray({
         identifierSymbol: nodeIdentifierSymbol,
         options,
         argumentsIdentifierSymbols,
-        propertiesToCache: properties,
+        propertiesToCache: parsedProperties,
+      });
+    }
+
+    const omitted = new Set(getLiteralValues(omittedNameNode));
+    const properties = pickProperties(parsedProperties, { omitted });
+    if (properties) {
+      properties.forEach((property) => {
+        property.nodeText = debugName;
       });
     }
 

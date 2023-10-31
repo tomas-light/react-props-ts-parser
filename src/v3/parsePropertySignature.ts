@@ -71,7 +71,7 @@ export function parsePropertySignature(
       return property;
     }
 
-    const { isCached, isGenericArgument } = property[internalSymbol];
+    const { isGenericArgument } = property[internalSymbol];
 
     const copy: ParsedProperty = {
       ...property,
@@ -82,10 +82,6 @@ export function parsePropertySignature(
 
     if (isGenericArgument) {
       delete copy[internalSymbol]!.isGenericArgument;
-    }
-
-    if (isCached) {
-      delete copy[internalSymbol]!.isCached;
     }
 
     if (Object.keys(copy[internalSymbol]!).length === 0) {

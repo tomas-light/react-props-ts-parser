@@ -18,7 +18,6 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
 
   [internalSymbol]?: {
     isGenericArgument?: boolean;
-    isCached?: boolean;
   };
 
   jsDoc?: JsDoc;
@@ -35,17 +34,63 @@ export interface ParsedPropertyDescriptor<Type extends string, Value = never> {
 export type NodeId = ts.Symbol;
 export type NodeIdOrText = ts.Symbol | string;
 
-// MyType => [<type identifier symbol>, [{ type: 'string' }] ]
-// Some<'qwe'> => [<type identifier symbol>, [{ type: 'number' }] ]
-// HTMLAttributes<HTMLDivElement> => [<type identifier symbol>, [{ cached: [{ type: 'object' }] }] ]
+/**
+ * @example
+ * MyType => [
+ *   <type identifier symbol>, [{
+ *     cached: [{ type: 'string' }]
+ *   }]
+ * ]
+ *
+ * Some<'qwe'> => [
+ *   <type identifier symbol>, [{
+ *     argumentsSet: [<symbol identifier of 'qwe'>],
+ *     cached: [{ type: 'number' }]
+ *   }]
+ * ]
+ *
+ * HTMLAttributes<HTMLDivElement> => [
+ *   <type identifier symbol>, [{
+ *     argumentsSet: [<symbol identifier of 'HTMLDivElement'>],
+ *     cached: [{ type: 'object' }]
+ *   }]
+ * ]
+ * */
 export type NodeCacheMap = Map<
-  NodeId | undefined, // symbol of identifier
-  // generics may have several parsed results: MyType<string> / MyType<number> / MyType<string, number>
+  /** symbol of identifier
+   * @example
+   * for HTMLAttributes<HTMLDivElement>, here will be identifier "HTMLAttributes"
+   * for Pick<MyType, 'qwe' | 'abc'>, here will be identifier "Pick"
+   * */
+  NodeId | undefined,
+  /** generics may have several parsed results
+   * @example
+   * HTMLAttributes<HTMLDivElement>
+   * HTMLAttributes<HTMLButtonElement>
+   * Pick<MyType, 'prop1'>
+   * Pick<MyType, 'prop2'>
+   * Pick<AnotherType, 'prop2' | 'prop3'>
+   * */
   Cached[]
 >;
 
 export type Cached = {
-  argumentsSet?: Set<NodeId>;
+  /**
+   * @example
+   * Pick<MyType, 'qwe' | 'abc'> => [
+   *   <"MyType" identifier symbol>,
+   *   <"'qwe' | 'abc'" identifier symbol>,
+   * ]
+   *
+   * Some<'qwe'> => [
+   *   <"qwe" identifier symbol>,
+   * ]
+   *
+   * HTMLAttributes<HTMLDivElement> => [
+   *   <"HTMLDivElement" identifier symbol>,
+   * ]
+   * */
+  argumentsSet?: Set<NodeIdOrText>;
   cached: ParsedProperty[];
 };
 

@@ -3,7 +3,7 @@ import { defined } from '../defined';
 import { InternalParseFunction, InternalParseOptions } from './ParseFunction';
 import { parsePropertySignature } from './parsePropertySignature';
 import { internalSymbol } from './symbols';
-import { Cached, NodeId, ParsedProperty } from './types';
+import { Cached, NodeId, NodeIdOrText, ParsedProperty } from './types';
 
 export abstract class ParserStrategy {
   constructor(protected readonly globalParse: InternalParseFunction) {}
@@ -26,7 +26,7 @@ export abstract class ParserStrategy {
   protected cacheArray(config: {
     options: InternalParseOptions;
     identifierSymbol: ts.Symbol | undefined;
-    argumentsIdentifierSymbols?: ts.Symbol[];
+    argumentsIdentifierSymbols?: NodeIdOrText[];
     propertiesToCache: ParsedProperty[] | undefined;
   }) {
     const {
@@ -35,6 +35,7 @@ export abstract class ParserStrategy {
       options,
       propertiesToCache,
     } = config;
+    const debugText = identifierSymbol?.getEscapedName();
 
     if (!propertiesToCache) {
       return undefined;
@@ -54,7 +55,7 @@ export abstract class ParserStrategy {
 
   protected cache(config: {
     identifierSymbol: ts.Symbol | undefined;
-    argumentsIdentifierSymbols?: ts.Symbol[];
+    argumentsIdentifierSymbols?: NodeIdOrText[];
     options: InternalParseOptions;
     propertyToCache: ParsedProperty;
   }): ParsedProperty {
@@ -64,6 +65,7 @@ export abstract class ParserStrategy {
       options,
       propertyToCache,
     } = config;
+    const debugText = identifierSymbol?.getEscapedName();
 
     const { nodeCacheMap, passedGenericConstraintsAsParameterToNestedGeneric } =
       options;
@@ -86,20 +88,16 @@ export abstract class ParserStrategy {
       cachedProperty.push(cached);
     }
 
-    if (!propertyToCache[internalSymbol]) {
-      propertyToCache[internalSymbol] = {};
-    }
-    propertyToCache[internalSymbol].isCached = true;
-
     return this.copyCachedProperty(propertyToCache);
   }
 
   protected findInCache(config: {
     identifierSymbol: NodeId | undefined;
-    argumentsIdentifierSymbols?: NodeId[];
+    argumentsIdentifierSymbols?: NodeIdOrText[];
     options: InternalParseOptions;
   }) {
     const { identifierSymbol, argumentsIdentifierSymbols, options } = config;
+    const debugText = identifierSymbol?.getEscapedName();
 
     const cached = options.nodeCacheMap.get(identifierSymbol);
     if (!cached) {
@@ -118,6 +116,10 @@ export abstract class ParserStrategy {
         )
     );
 
+    if (!filtered.length) {
+      return undefined;
+    }
+
     return this.copyCached(filtered);
   }
 
@@ -125,8 +127,45 @@ export abstract class ParserStrategy {
     return cached.flatMap((cache) => cache.cached.map(this.copyCachedProperty));
   }
 
+  // copy to prevents "propertyName" and "nodeText" collisions between different using
   private copyCachedProperty(property: ParsedProperty): ParsedProperty {
-    // copy to prevents "propertyName" and "nodeText" collisions between different using
-    return { ...property };
+    switch (property.type) {
+      case 'generic-constraint':
+        if (typeof property.value === 'string') {
+          return { ...property };
+        }
+        return {
+          ...property,
+          value: property.value?.slice(),
+        };
+
+      case 'union-type':
+      case 'array':
+      case 'object':
+        return {
+          ...property,
+          value: property.value?.slice(),
+        };
+
+      case 'string':
+      case 'string-literal':
+      case 'number':
+      case 'number-literal':
+      case 'boolean':
+      case 'boolean-literal':
+      case 'bigint':
+      case 'bigint-literal':
+      case 'symbol':
+      case 'null':
+      case 'undefined':
+      case 'any':
+      case 'unknown':
+      case 'imported-type':
+      case 'imported-from-react':
+      case 'not-parsed':
+      case 'prevented-from-parsing':
+      default:
+        return { ...property };
+    }
   }
 }

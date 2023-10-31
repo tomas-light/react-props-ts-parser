@@ -14,6 +14,7 @@ export function getTypeReferenceIdentifierSymbol(
   tsNode: ts.TypeReferenceNode,
   typeChecker: ts.TypeChecker
 ) {
+  const debugName = tsNode?.getFullText();
   const identifier = getTypeReferenceIdentifier(tsNode);
 
   if (identifier) {

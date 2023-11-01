@@ -1,108 +1,148 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty } from '../../types';
-import { flatProperties } from './flatProperties';
-import { Props } from './Intersection.props';
+import { flatAndFilterPropertyByName } from './utils/findPropertyByName';
+import { onceParsing } from './utils/onceParsing';
 
 describe('[class] Intersection parser', () => {
   const filePath = path.join(__dirname, 'Intersection.props.ts');
 
-  const expected: {
-    [propertyName in keyof Props]: [string, ParsedProperty];
-  } = {
-    external_string1: [
-      'first property of first inherited object is presented in parsed result and it is parsed correctly',
+  const _parse = onceParsing(filePath);
+
+  test('first property of first inherited object is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_string1');
+    expect(property).toEqual([
       {
         optional: true,
         propertyName: 'external_string1',
         type: 'string',
       },
-    ],
-    external_string2: [
-      'second property of first inherited object is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('second property of first inherited object is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_string2');
+    expect(property).toEqual([
       {
         propertyName: 'external_string2',
         type: 'string',
       },
-    ],
-    external_number1: [
-      'first self property of inherited interception type is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('first self property of inherited interception type is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_number1');
+    expect(property).toEqual([
       {
         propertyName: 'external_number1',
         type: 'number',
       },
-    ],
-    external_number2: [
-      'second self property of inherited interception type is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('second self property of inherited interception type is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_number2');
+    expect(property).toEqual([
       {
         propertyName: 'external_number2',
         type: 'number',
       },
-    ],
-    external_boolean1: [
-      'first inherited property of inherited interception type is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('first inherited property of inherited interception type is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_boolean1');
+    expect(property).toEqual([
       {
         propertyName: 'external_boolean1',
         type: 'boolean',
       },
-    ],
-    external_boolean2: [
-      'second inherited property of inherited interception type is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('second inherited property of inherited interception type is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_boolean2');
+    expect(property).toEqual([
       {
         propertyName: 'external_boolean2',
         type: 'boolean',
       },
-    ],
-    props_string1: [
-      'first self property is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('first self property is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_string1');
+    expect(property).toEqual([
       {
         propertyName: 'props_string1',
         type: 'string',
       },
-    ],
-    props_string2: [
-      'second self property is presented in parsed result and it is parsed correctly',
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('second self property is presented in parsed result and it is parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_string2');
+    expect(property).toEqual([
       {
         propertyName: 'props_string2',
         type: 'string',
       },
-    ],
-  };
-
-  test.each(Object.entries(expected))(
-    '%s',
-    async (propertyName, [, expectedValue]) => {
-      const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-        filePath,
-        'Props',
-        testCompilerOptions
-      ))!;
-
-      const result = parse(propsNode, {
-        typeChecker,
-        nodeCacheMap: new Map(),
-      });
-      const properties = flatProperties(result);
-      const targetProperty = properties.find(
-        (parsedProperty) => parsedProperty!.propertyName === propertyName
-      );
-      expect(targetProperty).toEqual(expectedValue);
-    }
-  );
+    ] satisfies ParsedProperty[]);
+  });
 
   test('full parsed type is parsed correctly', async () => {
-    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-      filePath,
-      'Props',
-      testCompilerOptions
-    ))!;
-
-    const result = parse(propsNode, {
-      typeChecker,
-      nodeCacheMap: new Map(),
-    });
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
     expect(result).toEqual(expectedResult());
 
     function expectedResult(): ParsedProperty[] {

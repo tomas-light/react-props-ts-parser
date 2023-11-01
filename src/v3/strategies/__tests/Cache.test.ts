@@ -1,55 +1,13 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
-import { ParsedArray, ParsedObject, ParsedProperty } from '../../types';
+import { ParsedArray } from '../../types';
 import { Props } from './Cache.props';
+import { findPropertyByName } from './utils/findPropertyByName';
+import { onceParsing } from './utils/onceParsing';
 
 describe('Type Reference caching', () => {
   const filePath = path.join(__dirname, 'Cache.props.ts');
 
-  let propsNode: NonNullable<
-    Awaited<ReturnType<typeof findTsNodeInFile>>
-  >['tsNode'];
-
-  let typeChecker: NonNullable<
-    Awaited<ReturnType<typeof findTsNodeInFile>>
-  >['typeChecker'];
-
-  let parsedProperties: ParsedProperty[] | undefined;
-
-  async function _parse() {
-    if (!propsNode || !typeChecker) {
-      const founded = await findTsNodeInFile(
-        filePath,
-        'Props',
-        testCompilerOptions
-      );
-      ({ tsNode: propsNode, typeChecker } = founded!);
-    }
-
-    if (parsedProperties) {
-      return parsedProperties;
-    }
-
-    parsedProperties = parse(propsNode, {
-      typeChecker,
-      nodeCacheMap: new Map(),
-    });
-
-    return parsedProperties;
-  }
-
-  function findProperty(
-    properties: ParsedProperty[],
-    propertyName: keyof Props
-  ) {
-    const [objectProperty] = properties as [ParsedObject];
-
-    return objectProperty.value?.find(
-      (property) => property.propertyName === propertyName
-    );
-  }
+  const _parse = onceParsing(filePath);
 
   describe('super simple cases', () => {
     test('type alias on union: properties have same object reference', async () => {
@@ -59,8 +17,8 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'cached1_1');
-      const property2 = findProperty(result, 'cached1_2');
+      const property1 = findPropertyByName<Props>(result, 'cached1_1');
+      const property2 = findPropertyByName<Props>(result, 'cached1_2');
 
       expect(property1).not.toBeUndefined();
       expect(property1?.value).toBe(property2?.value);
@@ -73,8 +31,8 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'cached3_1');
-      const property2 = findProperty(result, 'cached3_2');
+      const property1 = findPropertyByName<Props>(result, 'cached3_1');
+      const property2 = findPropertyByName<Props>(result, 'cached3_2');
 
       expect(property1).not.toBeUndefined();
       expect(property1?.value).toBe(property2?.value);
@@ -87,8 +45,8 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'cached2_1');
-      const property2 = findProperty(result, 'cached2_2');
+      const property1 = findPropertyByName<Props>(result, 'cached2_1');
+      const property2 = findPropertyByName<Props>(result, 'cached2_2');
 
       expect(property1).not.toBeUndefined();
       expect(property1?.value).toBe(property2?.value);
@@ -103,10 +61,10 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'cached4_1') as
+      const property1 = findPropertyByName<Props>(result, 'cached4_1') as
         | ParsedArray
         | undefined;
-      const property2 = findProperty(result, 'cached4_2') as
+      const property2 = findPropertyByName<Props>(result, 'cached4_2') as
         | ParsedArray
         | undefined;
 
@@ -121,10 +79,10 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'cached8_1') as
+      const property1 = findPropertyByName<Props>(result, 'cached8_1') as
         | ParsedArray
         | undefined;
-      const property2 = findProperty(result, 'cached8_2') as
+      const property2 = findPropertyByName<Props>(result, 'cached8_2') as
         | ParsedArray
         | undefined;
 
@@ -141,8 +99,8 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'not_cached5_1');
-      const property2 = findProperty(result, 'not_cached5_2');
+      const property1 = findPropertyByName<Props>(result, 'not_cached5_1');
+      const property2 = findPropertyByName<Props>(result, 'not_cached5_2');
 
       expect(property1).not.toBeUndefined();
       expect(property2?.value).toBe(property1?.value);
@@ -155,8 +113,8 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'not_cached6_1');
-      const property2 = findProperty(result, 'not_cached6_2');
+      const property1 = findPropertyByName<Props>(result, 'not_cached6_1');
+      const property2 = findPropertyByName<Props>(result, 'not_cached6_2');
 
       expect(property1).not.toBeUndefined();
       expect(property2?.value).toBe(property1?.value);
@@ -169,8 +127,8 @@ describe('Type Reference caching', () => {
         return;
       }
 
-      const property1 = findProperty(result, 'not_cached7_1');
-      const property2 = findProperty(result, 'not_cached7_2');
+      const property1 = findPropertyByName<Props>(result, 'not_cached7_1');
+      const property2 = findPropertyByName<Props>(result, 'not_cached7_2');
 
       expect(property1).not.toBeUndefined();
       expect(property2?.value).toBe(property1?.value);

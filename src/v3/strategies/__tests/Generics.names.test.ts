@@ -1,23 +1,14 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty, ParsedUnionType } from '../../types';
+import { onceParsing } from './utils/onceParsing';
 
 describe('[class] TypeReference parser for generics (names version)', () => {
   const filePath = path.join(__dirname, 'Generics.names.props.ts');
 
-  test('all properties have corrected propertyNames', async () => {
-    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-      filePath,
-      'Props',
-      testCompilerOptions
-    ))!;
+  const _parse = onceParsing(filePath);
 
-    const result = parse(propsNode, {
-      typeChecker,
-      nodeCacheMap: new Map(),
-    });
+  test('all properties have corrected propertyNames', async () => {
+    const result = await _parse();
     expect(result).toEqual(expectedResult());
 
     function expectedResult(): ParsedProperty[] {

@@ -1,12 +1,12 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedObject, ParsedProperty } from '../../types';
 import { Props } from './ReactTypes.props';
+import { onceParsing } from './utils/onceParsing';
 
 describe('[class] ReactTypes parser', () => {
   const filePath = path.join(__dirname, 'ReactTypes.props.ts');
+
+  const parseSuite = onceParsing(filePath);
 
   const htmlAttributesParsedProperty: ParsedProperty = {
     propertyName: 'className',
@@ -146,16 +146,6 @@ describe('[class] ReactTypes parser', () => {
   describe.each(Object.entries(expected))(
     '%s',
     (propertyName, [, expectedParsedProperties]) => {
-      async function parseSuite() {
-        const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-          filePath,
-          'Props',
-          testCompilerOptions
-        ))!;
-
-        return parse(propsNode, { typeChecker, nodeCacheMap: new Map() });
-      }
-
       function findProperty(
         parsedProperties: ParsedProperty[] | undefined,
         propertyToFind: ParsedProperty

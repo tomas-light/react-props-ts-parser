@@ -1,4 +1,4 @@
-import { ParsedProperty } from '../../types';
+import { ParsedProperty } from '../../../types';
 
 export function flatProperties(
   parsedProperties: ParsedProperty[] | undefined

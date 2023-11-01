@@ -1,6 +1,6 @@
-import { findPropertyTsNode } from '../../findPropertyTsNode';
-import { findTsNodeInFile } from '../../findTsNodeInFile';
-import { testCompilerOptions } from '../testCompilerOptions';
+import { findPropertyTsNode } from '../../../../findPropertyTsNode';
+import { findTsNodeInFile } from '../../../../findTsNodeInFile';
+import { testCompilerOptions } from '../../../testCompilerOptions';
 
 export async function getPropertyNode(filePath: string, propertyName: string) {
   const founded = (await findTsNodeInFile(

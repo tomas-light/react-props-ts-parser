@@ -1,31 +1,61 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty } from '../../types';
-import { flatProperties } from './flatProperties';
+import { flatAndFilterPropertyByName } from './utils/findPropertyByName';
+import { onceParsing } from './utils/onceParsing';
 
 describe('[class] UnionType parser', () => {
   const filePath = path.join(__dirname, 'UnionType.props.ts');
 
-  const expected = {
-    external_optional_string: [
-      '1st inherited type: optional string is presented in parsed result and parsed correctly',
+  const _parse = onceParsing(filePath);
+
+  test('1st inherited type: optional string is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'external_optional_string'
+    );
+    expect(property).toEqual([
       {
         optional: true,
         propertyName: 'external_optional_string',
         type: 'string',
-      } satisfies ParsedProperty,
-    ] as const,
-    external_string: [
-      '1st inherited type: string is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('1st inherited type: string is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'external_string');
+    expect(property).toEqual([
       {
         propertyName: 'external_string',
         type: 'string',
-      } satisfies ParsedProperty,
-    ] as const,
-    external_number_or_string: [
-      '2nd inherited type (with 3rd type): number or string is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('2nd inherited type (with 3rd type): number or string is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'external_number_or_string'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'external_number_or_string',
         type: 'union-type',
@@ -37,10 +67,22 @@ describe('[class] UnionType parser', () => {
             type: 'string',
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    external_number_or_boolean: [
-      '2nd inherited type (with 3rd type): number or boolean is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('2nd inherited type (with 3rd type): number or boolean is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'external_number_or_boolean'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'external_number_or_boolean',
         type: 'union-type',
@@ -52,10 +94,22 @@ describe('[class] UnionType parser', () => {
             type: 'boolean',
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    external_boolean_or_null: [
-      '3rd inherited type: boolean or null is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('3rd inherited type: boolean or null is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'external_boolean_or_null'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'external_boolean_or_null',
         type: 'union-type',
@@ -67,10 +121,22 @@ describe('[class] UnionType parser', () => {
             type: 'null',
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    external_boolean_or_symbol: [
-      '3rd inherited type: boolean or symbol is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('3rd inherited type: boolean or symbol is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'external_boolean_or_symbol'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'external_boolean_or_symbol',
         type: 'union-type',
@@ -82,10 +148,22 @@ describe('[class] UnionType parser', () => {
             type: 'symbol',
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    props_string_literal: [
-      '1st self type: string union literals are presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('1st self type: string union literals are presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'props_string_literal'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'props_string_literal',
         type: 'union-type',
@@ -99,10 +177,22 @@ describe('[class] UnionType parser', () => {
             value: 'string_2',
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    props_number_literal: [
-      '1st self type: number union literals are presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('1st self type: number union literals are presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'props_number_literal'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'props_number_literal',
         type: 'union-type',
@@ -116,10 +206,22 @@ describe('[class] UnionType parser', () => {
             value: 50,
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    props_bigint_literal: [
-      '2nd self type: bigint union literals are presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('2nd self type: bigint union literals are presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(
+      result,
+      'props_bigint_literal'
+    );
+    expect(property).toEqual([
       {
         propertyName: 'props_bigint_literal',
         type: 'union-type',
@@ -133,10 +235,19 @@ describe('[class] UnionType parser', () => {
             value: 100n,
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-    props_array_or_set: [
-      '2nd self type: array or set are presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('2nd self type: array or set are presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_array_or_set');
+    expect(property).toEqual([
       {
         propertyName: 'props_array_or_set',
         type: 'union-type',
@@ -155,42 +266,17 @@ describe('[class] UnionType parser', () => {
             value: 'Set<string>',
           },
         ],
-      } satisfies ParsedProperty,
-    ] as const,
-  };
-
-  test.each(Object.entries(expected))(
-    '%s',
-    async (propertyName, [, expectedValue]) => {
-      const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-        filePath,
-        'Props',
-        testCompilerOptions
-      ))!;
-
-      const result = parse(propsNode, {
-        typeChecker,
-        nodeCacheMap: new Map(),
-      });
-      const properties = flatProperties(result);
-      const targetProperty = properties.find(
-        (parsedProperty) => parsedProperty!.propertyName === propertyName
-      );
-      expect(targetProperty).toEqual(expectedValue);
-    }
-  );
+      },
+    ] satisfies ParsedProperty[]);
+  });
 
   test('full parsed type is parsed correctly', async () => {
-    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-      filePath,
-      'Props',
-      testCompilerOptions
-    ))!;
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
 
-    const result = parse(propsNode, {
-      typeChecker,
-      nodeCacheMap: new Map(),
-    });
     expect(result).toEqual(expectedResult());
 
     function expectedResult(): ParsedProperty[] {

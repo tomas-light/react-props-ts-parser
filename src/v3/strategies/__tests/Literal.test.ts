@@ -1,88 +1,100 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty } from '../../types';
-import { flatProperties } from './flatProperties';
+import { flatAndFilterPropertyByName } from './utils/findPropertyByName';
+import { onceParsing } from './utils/onceParsing';
 
 describe('[class] Literal parser', () => {
   const filePath = path.join(__dirname, 'Literal.props.ts');
 
-  const expected = {
-    props_string: [
-      'string literal is presented in parsed result and parsed correctly',
+  const _parse = onceParsing(filePath);
+
+  test('string literal is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_string');
+    expect(property).toEqual([
       {
         propertyName: 'props_string',
         type: 'string-literal',
         value: 'string_1',
-      } satisfies ParsedProperty,
-    ] as const,
-    props_number: [
-      'number literal is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('number literal is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_number');
+    expect(property).toEqual([
       {
         propertyName: 'props_number',
         type: 'number-literal',
         value: 25,
-      } satisfies ParsedProperty,
-    ] as const,
-    props_bigint: [
-      'bigint literal is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('bigint literal is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_bigint');
+    expect(property).toEqual([
       {
         propertyName: 'props_bigint',
         type: 'bigint-literal',
         value: 100n,
-      } satisfies ParsedProperty,
-    ] as const,
-    props_true: [
-      'true literal is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('true literal is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_true');
+    expect(property).toEqual([
       {
         propertyName: 'props_true',
         type: 'boolean-literal',
         value: true,
-      } satisfies ParsedProperty,
-    ] as const,
-    props_false: [
-      'true literal is presented in parsed result and parsed correctly',
+      },
+    ] satisfies ParsedProperty[]);
+  });
+
+  test('true literal is presented in parsed result and parsed correctly', async () => {
+    const result = await _parse();
+    if (!result) {
+      expect(result).not.toBeUndefined();
+      return;
+    }
+
+    const property = flatAndFilterPropertyByName(result, 'props_false');
+    expect(property).toEqual([
       {
         propertyName: 'props_false',
         type: 'boolean-literal',
         value: false,
-      } satisfies ParsedProperty,
-    ] as const,
-  };
-
-  test.each(Object.entries(expected))(
-    '%s',
-    async (propertyName, [, expectedValue]) => {
-      const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-        filePath,
-        'Props',
-        testCompilerOptions
-      ))!;
-
-      const result = parse(propsNode, {
-        typeChecker,
-        nodeCacheMap: new Map(),
-      });
-      const properties = flatProperties(result);
-      const targetProperty = properties.find(
-        (parsedProperty) => parsedProperty!.propertyName === propertyName
-      );
-      expect(targetProperty).toEqual(expectedValue);
-    }
-  );
+      },
+    ] satisfies ParsedProperty[]);
+  });
 
   test('full parsed type is parsed correctly', async () => {
-    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-      filePath,
-      'Props',
-      testCompilerOptions
-    ))!;
-
-    const result = parse(propsNode, {
-      typeChecker,
-      nodeCacheMap: new Map(),
-    });
+    const result = await _parse();
     expect(result).toEqual(expectedResult());
 
     function expectedResult(): ParsedProperty[] {

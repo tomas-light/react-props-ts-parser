@@ -1,97 +1,89 @@
 import path from 'path';
-import { findTsNodeInFile } from '../../../findTsNodeInFile';
-import { parse } from '../../parse';
-import { testCompilerOptions } from '../../testCompilerOptions';
 import { ParsedProperty } from '../../types';
-import { getPropertyNode } from '../getPropertyNode';
+import { Props } from './Array.props';
+import { findPropertyByName } from './utils/findPropertyByName';
+import { onceParsing } from './utils/onceParsing';
 
 describe('[class] Array parser', () => {
   const filePath = path.join(__dirname, 'Array.props.ts');
-  const _getPropertyNode = (propertyName: string) =>
-    getPropertyNode(filePath, propertyName);
+
+  const _parse = onceParsing(filePath);
 
   test('arrayNode property is parsed correctly', async () => {
-    const { tsNode, typeChecker } = await _getPropertyNode('arrayNode');
-    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
-    expect(result).toEqual([
-      {
-        propertyName: 'arrayNode',
-        nodeText: 'string[]',
-        type: 'array',
-        value: [
-          {
-            type: 'string',
-          },
-        ],
-      },
-    ]);
+    const parsedProperties = await _parse();
+    const property = findPropertyByName<Props>(parsedProperties, 'arrayNode');
+
+    expect(property).toEqual({
+      propertyName: 'arrayNode',
+      nodeText: 'string[]',
+      type: 'array',
+      value: [
+        {
+          type: 'string',
+        },
+      ],
+    } satisfies ParsedProperty);
   });
 
   test('readonlyArrayNode property is parsed correctly', async () => {
-    const { tsNode, typeChecker } = await _getPropertyNode('readonlyArrayNode');
-    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
-    expect(result).toEqual([
-      {
-        propertyName: 'readonlyArrayNode',
-        nodeText: 'string[]',
-        type: 'array',
-        value: [
-          {
-            type: 'string',
-          },
-        ],
-      },
-    ]);
+    const parsedProperties = await _parse();
+    const property = findPropertyByName<Props>(
+      parsedProperties,
+      'readonlyArrayNode'
+    );
+
+    expect(property).toEqual({
+      propertyName: 'readonlyArrayNode',
+      nodeText: 'string[]',
+      type: 'array',
+      value: [
+        {
+          type: 'string',
+        },
+      ],
+    } satisfies ParsedProperty);
   });
 
   test('arrayReferenceNode property is parsed correctly', async () => {
-    const { tsNode, typeChecker } =
-      await _getPropertyNode('arrayReferenceNode');
-    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
-    expect(result).toEqual([
-      {
-        propertyName: 'arrayReferenceNode',
-        nodeText: 'Array<string>',
-        type: 'array',
-        value: [
-          {
-            type: 'string',
-          },
-        ],
-      },
-    ]);
+    const parsedProperties = await _parse();
+    const property = findPropertyByName<Props>(
+      parsedProperties,
+      'arrayReferenceNode'
+    );
+
+    expect(property).toEqual({
+      propertyName: 'arrayReferenceNode',
+      nodeText: 'Array<string>',
+      type: 'array',
+      value: [
+        {
+          type: 'string',
+        },
+      ],
+    } satisfies ParsedProperty);
   });
 
   test('readonlyArrayReferenceNode property is parsed correctly', async () => {
-    const { tsNode, typeChecker } = await _getPropertyNode(
+    const parsedProperties = await _parse();
+    const property = findPropertyByName<Props>(
+      parsedProperties,
       'readonlyArrayReferenceNode'
     );
-    const result = parse(tsNode, { typeChecker, nodeCacheMap: new Map() });
-    expect(result).toEqual([
-      {
-        propertyName: 'readonlyArrayReferenceNode',
-        nodeText: 'ReadonlyArray<string>',
-        type: 'array',
-        value: [
-          {
-            type: 'string',
-          },
-        ],
-      },
-    ]);
+
+    expect(property).toEqual({
+      propertyName: 'readonlyArrayReferenceNode',
+      nodeText: 'ReadonlyArray<string>',
+      type: 'array',
+      value: [
+        {
+          type: 'string',
+        },
+      ],
+    } satisfies ParsedProperty);
   });
 
   test('full parsed type is parsed correctly', async () => {
-    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-      filePath,
-      'Props',
-      testCompilerOptions
-    ))!;
-
-    const result = parse(propsNode, {
-      typeChecker,
-      nodeCacheMap: new Map(),
-    });
+    const result = await _parse();
     expect(result).toEqual(expectedResult());
 
     function expectedResult(): ParsedProperty[] {

@@ -2,7 +2,7 @@ import ts from 'typescript';
 
 export function findPropertyTsNode(
   propertyName: string,
-  tsNode: ts.TypeAliasDeclaration | ts.InterfaceDeclaration,
+  tsNode: ts.TypeAliasDeclaration | ts.InterfaceDeclaration
 ): ts.Node | undefined {
   let propertyNode: ts.Node | undefined;
 
@@ -13,7 +13,7 @@ export function findPropertyTsNode(
       if (!propertyNode && ts.isTypeLiteralNode(_tsNode)) {
         propertyNode = findPropertySignatureInTypeLiteral(
           propertyName,
-          _tsNode,
+          _tsNode
         );
       }
     });
@@ -24,7 +24,7 @@ export function findPropertyTsNode(
 
 function findPropertySignatureInTypeLiteral(
   propertyName: string,
-  tsNode: ts.Node,
+  tsNode: ts.Node
 ) {
   let propertyNode: ts.Node | undefined;
 

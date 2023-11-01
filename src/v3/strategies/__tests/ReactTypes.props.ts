@@ -1,8 +1,8 @@
 import {
-  HTMLAttributes,
   AnchorHTMLAttributes,
-  InputHTMLAttributes,
   CanvasHTMLAttributes,
+  HTMLAttributes,
+  InputHTMLAttributes,
 } from 'react';
 
 export type Props = HTMLAttributes<HTMLDivElement> & {

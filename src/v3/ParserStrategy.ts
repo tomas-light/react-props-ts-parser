@@ -2,7 +2,6 @@ import ts from 'typescript';
 import { defined } from '../defined';
 import { InternalParseFunction, InternalParseOptions } from './ParseFunction';
 import { parsePropertySignature } from './parsePropertySignature';
-import { internalSymbol } from './symbols';
 import { Cached, NodeId, NodeIdOrText, ParsedProperty } from './types';
 
 export abstract class ParserStrategy {

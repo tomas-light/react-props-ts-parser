@@ -8,17 +8,36 @@ import { Props } from './Cache.props';
 describe('Type Reference caching', () => {
   const filePath = path.join(__dirname, 'Cache.props.ts');
 
-  async function _parse() {
-    const { tsNode: propsNode, typeChecker } = (await findTsNodeInFile(
-      filePath,
-      'Props',
-      testCompilerOptions
-    ))!;
+  let propsNode: NonNullable<
+    Awaited<ReturnType<typeof findTsNodeInFile>>
+  >['tsNode'];
 
-    return parse(propsNode, {
+  let typeChecker: NonNullable<
+    Awaited<ReturnType<typeof findTsNodeInFile>>
+  >['typeChecker'];
+
+  let parsedProperties: ParsedProperty[] | undefined;
+
+  async function _parse() {
+    if (!propsNode || !typeChecker) {
+      const founded = await findTsNodeInFile(
+        filePath,
+        'Props',
+        testCompilerOptions
+      );
+      ({ tsNode: propsNode, typeChecker } = founded!);
+    }
+
+    if (parsedProperties) {
+      return parsedProperties;
+    }
+
+    parsedProperties = parse(propsNode, {
       typeChecker,
       nodeCacheMap: new Map(),
     });
+
+    return parsedProperties;
   }
 
   function findProperty(

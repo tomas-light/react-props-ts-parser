@@ -203,12 +203,11 @@ export class TypeReferenceParser extends ParserStrategy {
     });
 
     if (parsedProperties.length) {
-      this.cacheArray({
+      return this.cacheArray({
         identifierSymbol,
         options,
         propertiesToCache: parsedProperties,
       });
-      return parsedProperties;
     }
   };
 
@@ -252,21 +251,8 @@ export class TypeReferenceParser extends ParserStrategy {
       return;
     }
 
-    let parsedProperties = this.globalParse(typeNode, options);
-
+    const parsedProperties = this.globalParse(typeNode, options);
     if (parsedProperties) {
-      const argumentsIdentifierSymbols = this.findArgumentSymbols(
-        tsNode,
-        options
-      );
-
-      parsedProperties = this.cacheArray({
-        identifierSymbol: nodeIdentifierSymbol,
-        options,
-        argumentsIdentifierSymbols: argumentsIdentifierSymbols,
-        propertiesToCache: parsedProperties,
-      });
-
       parsedProperties?.forEach((parsedProperty) => {
         parsedProperty.nodeText = debugName;
 
@@ -281,9 +267,19 @@ export class TypeReferenceParser extends ParserStrategy {
           );
         }
       });
-    }
 
-    return parsedProperties;
+      const argumentsIdentifierSymbols = this.findArgumentSymbols(
+        tsNode,
+        options
+      );
+
+      return this.cacheArray({
+        identifierSymbol: nodeIdentifierSymbol,
+        options,
+        argumentsIdentifierSymbols,
+        propertiesToCache: parsedProperties,
+      });
+    }
   }
 
   private findArgumentSymbols(
@@ -313,30 +309,26 @@ export class TypeReferenceParser extends ParserStrategy {
       return;
     }
 
-    let parsedProperties = this.globalParse(typeNode, options);
-    if (parsedProperties) {
-      const argumentsIdentifierSymbols = this.findArgumentSymbols(
-        tsNode,
-        options
-      );
-
-      parsedProperties = this.cacheArray({
-        identifierSymbol: nodeIdentifierSymbol,
-        options,
-        argumentsIdentifierSymbols,
-        propertiesToCache: parsedProperties,
-      });
-    }
-
+    const parsedProperties = this.globalParse(typeNode, options);
     const picked = new Set(getLiteralValues(pickedNameNode));
     const properties = pickProperties(parsedProperties, { picked });
     if (properties) {
       properties.forEach((property) => {
         property.nodeText = debugName;
       });
-    }
 
-    return properties;
+      const argumentsIdentifierSymbols = this.findArgumentSymbols(
+        tsNode,
+        options
+      );
+
+      return this.cacheArray({
+        identifierSymbol: nodeIdentifierSymbol,
+        options,
+        argumentsIdentifierSymbols,
+        propertiesToCache: properties,
+      });
+    }
   }
 
   private parseOmittedNode(
@@ -351,30 +343,26 @@ export class TypeReferenceParser extends ParserStrategy {
       return;
     }
 
-    let parsedProperties = this.globalParse(typeNode, options);
-    if (parsedProperties) {
-      const argumentsIdentifierSymbols = this.findArgumentSymbols(
-        tsNode,
-        options
-      );
-
-      parsedProperties = this.cacheArray({
-        identifierSymbol: nodeIdentifierSymbol,
-        options,
-        argumentsIdentifierSymbols,
-        propertiesToCache: parsedProperties,
-      });
-    }
-
+    const parsedProperties = this.globalParse(typeNode, options);
     const omitted = new Set(getLiteralValues(omittedNameNode));
     const properties = pickProperties(parsedProperties, { omitted });
     if (properties) {
       properties.forEach((property) => {
         property.nodeText = debugName;
       });
-    }
 
-    return properties;
+      const argumentsIdentifierSymbols = this.findArgumentSymbols(
+        tsNode,
+        options
+      );
+
+      return this.cacheArray({
+        identifierSymbol: nodeIdentifierSymbol,
+        options,
+        argumentsIdentifierSymbols,
+        propertiesToCache: properties,
+      });
+    }
   }
 
   private parseImportedType(

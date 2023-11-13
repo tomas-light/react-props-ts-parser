@@ -12,6 +12,7 @@ import {
 } from '../../ParseFunction';
 import { ParserStrategy } from '../../ParserStrategy';
 import {
+  NotParsedType,
   ParsedImportedType,
   ParsedObject,
   ParsedProperty,
@@ -21,6 +22,8 @@ import { ArrayParser } from '../Array.parser';
 import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
 
 export const UNKNOWN_IDENTIFIER_TEXT = 'unknown_identifier';
+
+const ReactTypesToDoNotParse = ['ReactNode', 'ReactElement', 'CSSProperties'];
 
 export class TypeReferenceParser extends ParserStrategy {
   parsePropertyValue: InternalParseFunction = (tsNode, options) => {
@@ -122,6 +125,23 @@ export class TypeReferenceParser extends ParserStrategy {
           identifierSymbol!
         );
       }
+    }
+
+    const nodeName = identifierSymbol?.getName();
+
+    if (nodeName && ReactTypesToDoNotParse.includes(nodeName)) {
+      const property: NotParsedType = {
+        type: 'not-parsed',
+        nodeText: debugName.trim(),
+        value: nodeName,
+      };
+
+      this.cache({
+        options,
+        identifierSymbol,
+        propertyToCache: property,
+      });
+      return [property];
     }
 
     let hasGenericParameters = false;
@@ -416,7 +436,7 @@ export class TypeReferenceParser extends ParserStrategy {
     };
 
     if (importedType.nameFromWhereImportIs === 'react') {
-      if (['ReactNode', 'ReactElement', 'CSSProperties'].includes(nodeName)) {
+      if (ReactTypesToDoNotParse.includes(nodeName)) {
         this.cache({
           options,
           identifierSymbol,

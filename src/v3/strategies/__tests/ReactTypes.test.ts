@@ -1,6 +1,7 @@
 import path from 'path';
 import { ParsedObject, ParsedProperty } from '../../types';
 import { Props } from './ReactTypes.props';
+import { flatAndFilterPropertyByName } from './utils/findPropertyByName';
 import { onceParsing } from './utils/onceParsing';
 
 describe('[class] ReactTypes parser', () => {
@@ -142,6 +143,28 @@ describe('[class] ReactTypes parser', () => {
       ],
     ],
   };
+
+  const _parse = onceParsing(filePath);
+
+  async function check(
+    propertyName: keyof Props | string,
+    expectedValue: ParsedProperty[]
+  ) {
+    const result = await _parse();
+    const targetProperty = flatAndFilterPropertyByName(result, propertyName);
+    expect(targetProperty).toEqual(expectedValue);
+  }
+
+  test('style / css properties', async () => {
+    await check('style', [
+      {
+        optional: true,
+        propertyName: 'style',
+        type: 'not-parsed',
+        value: 'CSSProperties',
+      },
+    ]);
+  });
 
   describe.each(Object.entries(expected))(
     '%s',

@@ -1,6 +1,6 @@
 {
   "name": "react-props-ts-parser",
-  "version": "3.0.0-rc-1",
+  "version": "3.0.0-rc-5",
   "description": "Get React component Props as JSON to be able to render documentation for your component based on Typescript definition",
   "author": "Artem Ignatev <art.ser.ignatiev@gmail.com>",
   "repository": "git@github.com:tomas-light/react-props-ts-parser.git",
@@ -9,9 +9,8 @@
     "url": "https://github.com/TomasLight/react-props-ts-parser/issues"
   },
   "license": "MIT",
-  "packageManager": "yarn@4.0.1",
   "scripts": {
-    "prepublish": "yarn build",
+    "prepublishOnly": "npm run build",
     "build": "tsc --project tsconfig.build.json",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

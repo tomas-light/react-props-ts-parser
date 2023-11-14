@@ -113,6 +113,8 @@ export function parsePropertySignature(
 
           (property as ParsedProperty).type = realProperty.type;
           (property as ParsedProperty).value = realProperty.value;
+          (property as ParsedProperty).import = realProperty.import;
+          (property as ParsedProperty).nodeText = realProperty.nodeText;
         }
       }
     }

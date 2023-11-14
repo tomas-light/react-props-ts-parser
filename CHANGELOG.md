@@ -1,3 +1,9 @@
+## Release 3.0.0-rc-6
+
+* bumped react type packages versions;
+* added `preventFromParsing` option;
+* fixed copying of optional properties;
+
 ## Release 3.0.0-rc-3
 
 * added error throwing when file to parse is not found, instead of writing message to console `file not found for path`;

@@ -153,21 +153,6 @@ export class TypeReferenceParser extends ParserStrategy {
       }
     }
 
-    // if (nodeName && currentScopedNames.has(nodeName)) {
-    //   const property: NotParsedType = {
-    //     type: 'not-parsed',
-    //     nodeText: debugName.trim(),
-    //     value: nodeName,
-    //   };
-    //
-    //   this.cache({
-    //     options,
-    //     identifierSymbol,
-    //     propertyToCache: property,
-    //   });
-    //   return [property];
-    // }
-
     let hasGenericParameters = false;
     let passedParameters: ts.Node[] | undefined;
 

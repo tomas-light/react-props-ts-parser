@@ -1,9 +1,9 @@
 import ts, { SyntaxKind } from 'typescript';
-import { ParseOptions } from '../../ParseFunction';
+import { InternalParseOptions } from '../../ParseFunction';
 
 export function findGenericConstraint(
   genericParameterNode: ts.TypeParameterDeclaration,
-  options: ParseOptions
+  options: InternalParseOptions
 ) {
   let identifierSymbol: ts.Symbol | undefined;
   let hasExtendsKeyword = false;

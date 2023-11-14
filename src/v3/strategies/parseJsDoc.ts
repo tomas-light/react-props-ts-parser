@@ -1,10 +1,10 @@
 import ts from 'typescript';
-import { ParseOptions } from '../ParseFunction';
+import { InternalParseOptions } from '../ParseFunction';
 import { JsDoc } from '../types';
 
 export function parseJsDoc(
   tsNode: ts.Node,
-  options: ParseOptions
+  options: InternalParseOptions
 ): JsDoc | undefined {
   const nodeText = tsNode.getFullText();
 

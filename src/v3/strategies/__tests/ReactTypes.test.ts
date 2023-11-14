@@ -170,6 +170,7 @@ describe('[class] ReactTypes parser', () => {
           type: 'CSSProperties',
           moduleName: 'react',
         },
+        nodeText: 'CSSProperties',
       },
     ]);
   });

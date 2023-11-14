@@ -144,7 +144,11 @@ describe('[class] ReactTypes parser', () => {
     ],
   };
 
-  const _parse = onceParsing(filePath);
+  const _parse = onceParsing(filePath, {
+    preventFromParsing: {
+      react: ['CSSProperties', 'ReactElement', 'ReactNode'],
+    },
+  });
 
   async function check(
     propertyName: keyof Props | string,
@@ -160,8 +164,12 @@ describe('[class] ReactTypes parser', () => {
       {
         optional: true,
         propertyName: 'style',
-        type: 'not-parsed',
+        type: 'imported-type',
         value: 'CSSProperties',
+        import: {
+          type: 'CSSProperties',
+          moduleName: 'react',
+        },
       },
     ]);
   });

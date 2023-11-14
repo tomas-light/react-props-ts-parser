@@ -23,8 +23,6 @@ import { markPropertyAsInternalGeneric } from './markPropertyAsInternalGeneric';
 
 export const UNKNOWN_IDENTIFIER_TEXT = 'unknown_identifier';
 
-const ReactTypesToDoNotParse = ['ReactNode', 'ReactElement', 'CSSProperties'];
-
 export class TypeReferenceParser extends ParserStrategy {
   parsePropertyValue: InternalParseFunction = (tsNode, options) => {
     const debugName = tsNode.getFullText();
@@ -129,20 +127,46 @@ export class TypeReferenceParser extends ParserStrategy {
 
     const nodeName = identifierSymbol?.getName();
 
-    if (nodeName && ReactTypesToDoNotParse.includes(nodeName)) {
-      const property: NotParsedType = {
-        type: 'not-parsed',
-        nodeText: debugName.trim(),
-        value: nodeName,
-      };
+    if (nodeName) {
+      for (const packageName of options.libraryScope.values()) {
+        const preventedTypeNames = options.preventFromParsing?.get(packageName);
+        if (!preventedTypeNames?.has(nodeName)) {
+          continue;
+        }
 
-      this.cache({
-        options,
-        identifierSymbol,
-        propertyToCache: property,
-      });
-      return [property];
+        const property: ParsedImportedType = {
+          nodeText: debugName.trim(),
+          value: nodeName,
+          type: 'imported-type',
+          import: {
+            type: nodeName,
+            moduleName: packageName,
+          },
+        };
+
+        this.cache({
+          options,
+          identifierSymbol,
+          propertyToCache: property,
+        });
+        return [property];
+      }
     }
+
+    // if (nodeName && currentScopedNames.has(nodeName)) {
+    //   const property: NotParsedType = {
+    //     type: 'not-parsed',
+    //     nodeText: debugName.trim(),
+    //     value: nodeName,
+    //   };
+    //
+    //   this.cache({
+    //     options,
+    //     identifierSymbol,
+    //     propertyToCache: property,
+    //   });
+    //   return [property];
+    // }
 
     let hasGenericParameters = false;
     let passedParameters: ts.Node[] | undefined;
@@ -436,7 +460,7 @@ export class TypeReferenceParser extends ParserStrategy {
     };
 
     if (importedType.nameFromWhereImportIs === 'react') {
-      if (ReactTypesToDoNotParse.includes(nodeName)) {
+      if (options.preventFromParsing?.get('react')?.has(nodeName)) {
         this.cache({
           options,
           identifierSymbol,
@@ -454,6 +478,9 @@ export class TypeReferenceParser extends ParserStrategy {
         const parsedProperties = this.globalParse(typeDeclarations[0], {
           ...options,
           skipTypeAliasAndInterfaces: true,
+          libraryScope: new Set(options.libraryScope).add(
+            importedType.nameFromWhereImportIs
+          ),
         });
 
         if (parsedProperties) {

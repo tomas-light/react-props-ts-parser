@@ -10,6 +10,9 @@ export type InternalParseOptions = {
   typeChecker: ts.TypeChecker;
   nodeCacheMap: NodeCacheMap;
 
+  preventFromParsing?: Map<string, Set<string>>;
+  libraryScope: Set<string>;
+
   typeArguments?: ts.NodeArray<ts.TypeNode>;
   /**
    * relation between parsed constraint and its parameter:
@@ -35,9 +38,28 @@ export type InternalParseOptions = {
 };
 
 export type ParseOptions = Partial<
-  Omit<InternalParseOptions, 'nodeIdToArgumentKeyMap'>
+  Omit<
+    InternalParseOptions,
+    'nodeIdToArgumentKeyMap' | 'preventFromParsing' | 'libraryScope'
+  >
 > & {
   typeChecker: ts.TypeChecker;
+  /**
+   * you may specify which of types should not be parsed
+   * @example
+   * parse(<node>, {
+   *   preventFromParsing: {
+   *     react: [
+   *       'CSSProperties',
+   *       'ReactElement',
+   *       'ReactNode',
+   *     ]
+   *   },
+   * })
+   * */
+  preventFromParsing?: {
+    [packageName: string]: string[];
+  };
 };
 
 export type InternalParseFunction = (

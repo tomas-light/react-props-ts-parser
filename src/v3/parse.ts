@@ -30,6 +30,23 @@ export const parse: ParseFunction = (
   return parseInternal(tsNode, {
     ...options,
     nodeCacheMap: options.nodeCacheMap ?? new Map(),
+    libraryScope: new Set(),
+    preventFromParsing: Object.entries(options.preventFromParsing ?? {}).reduce(
+      (map, [packageName, typeNames]) => {
+        let set = map.get(packageName);
+        if (!set) {
+          set = new Set<string>();
+          map.set(packageName, set);
+        }
+
+        typeNames.forEach((typeName) => {
+          set?.add(typeName);
+        });
+
+        return map;
+      },
+      new Map<string, Set<string>>()
+    ),
   });
 };
 

@@ -14,13 +14,11 @@ export function findImports(sourceFile: ts.SourceFile) {
     const children = tsNode.getChildren();
 
     const nameFromWhereImportIs = trimQuotesFromString(
-      children
-        .find((childNode) => ts.isStringLiteral(childNode))
-        ?.getFullText(),
+      children.find((childNode) => ts.isStringLiteral(childNode))?.getFullText()
     );
 
     const importClause = children.find((childNode) =>
-      ts.isImportClause(childNode),
+      ts.isImportClause(childNode)
     );
     if (!importClause) {
       return;
@@ -28,7 +26,7 @@ export function findImports(sourceFile: ts.SourceFile) {
 
     const importChildren = importClause.getChildren();
     const defaultImport = importChildren.find((node) =>
-      ts.isIdentifier(node),
+      ts.isIdentifier(node)
     ) as ts.Identifier | undefined;
 
     if (defaultImport) {
@@ -36,6 +34,23 @@ export function findImports(sourceFile: ts.SourceFile) {
         identifier: defaultImport,
         nameFromWhereImportIs: nameFromWhereImportIs!,
       });
+      return;
+    }
+
+    // todo: check how to work with such import correctly
+    const namespaceImport = importChildren.find((node) =>
+      ts.isNamespaceImport(node)
+    );
+    if (namespaceImport) {
+      const id = namespaceImport
+        .getChildren()
+        .find((node) => ts.isIdentifier(node)) as ts.Identifier | undefined;
+      if (id) {
+        imports.push({
+          identifier: id,
+          nameFromWhereImportIs: nameFromWhereImportIs!,
+        });
+      }
       return;
     }
 
@@ -59,7 +74,7 @@ export function findImports(sourceFile: ts.SourceFile) {
     }
 
     const importIdentifiers = importSpecifiers.flatMap((node) =>
-      node.getChildren().filter((childNode) => ts.isIdentifier(childNode)),
+      node.getChildren().filter((childNode) => ts.isIdentifier(childNode))
     ) as ts.Identifier[];
     if (!importIdentifiers.length) {
       return;
